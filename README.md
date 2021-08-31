@@ -10,7 +10,7 @@ Implementation of the jet classification network in [ParticleNet: Jet Tagging vi
 
 **[New] Keras/TensorFlow implemetation** 
  - [model](tf-keras/tf_keras_model.py)
- - Requires tensorflow>=2.0.0 or >=1.15rc2. 
+ - Requires tensorflow>=2.0.0 or >=1.15rc2. conda install -c anaconda pytables
  - A full training example is available in [tf-keras/keras_train.ipynb](tf-keras/keras_train.ipynb). 
     - The top tagging dataset can be obtained from [https://zenodo.org/record/2603256](https://zenodo.org/record/2603256) and converted with this [script](tf-keras/convert_dataset.ipynb). 
 
