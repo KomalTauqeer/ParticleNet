@@ -79,8 +79,10 @@ class Dataset(object):
             self._values[k] = self._values[k][shuffle_indices]
         self._label = self._label[shuffle_indices]
 
-train_dataset = Dataset('converted/train_file_0.awkd', data_format='channel_last')
-val_dataset = Dataset('converted/val_file_0.awkd', data_format='channel_last')
+train_dataset = Dataset('preprocessing/converted/train_file_0.awkd', data_format='channel_last')
+val_dataset = Dataset('preprocessing/converted/val_file_0.awkd', data_format='channel_last')
+#train_dataset = Dataset('tutorial_datasets/converted/train_file_0.awkd', data_format='channel_last')
+#val_dataset = Dataset('tutorial_datasets/converted/val_file_0.awkd', data_format='channel_last')
 
 import tensorflow as tf
 from tensorflow import keras
@@ -133,8 +135,8 @@ callbacks = [checkpoint, lr_scheduler, progress_bar]
 train_dataset.shuffle()
 model.fit(train_dataset.X, train_dataset.y,
           batch_size=batch_size,
-#           epochs=epochs,
-          epochs=1, # --- train only for 1 epoch here for demonstration ---
+           epochs=epochs,
+#          epochs=1, # --- train only for 1 epoch here for demonstration ---
           validation_data=(val_dataset.X, val_dataset.y),
           shuffle=True,
           callbacks=callbacks)
