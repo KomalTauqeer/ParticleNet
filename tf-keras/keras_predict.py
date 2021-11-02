@@ -103,10 +103,6 @@ print (PN_output)
 print ("Truth: ")
 print (truth_labels)
 
-#cm = confusion_matrix(truth_labels,PN_output)
-#disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=model.classes_)
-#disp.plot()
-#plt.show()
 
 #Plot DNN output
 plt.hist(PN_output[truth_labels[:,0]==1,0],30,histtype='step',color='red',label='$\mathrm{W^+}$')
@@ -115,4 +111,21 @@ plt.legend(loc='upper right')
 plt.ylabel('Events')
 plt.xlabel('Particle Net score')
 plt.savefig('PN1.pdf')
+plt.close()
+
+
+#Plot Confusion Matrix
+normalized_cm = confusion_matrix(truth_labels.argmax(axis=1),PN_output.argmax(axis=1),normalize = 'all')
+unnormalized_cm = confusion_matrix(truth_labels.argmax(axis=1),PN_output.argmax(axis=1))
+#print (cm)
+cm = ConfusionMatrixDisplay(normalized_cm, display_labels=['$\mathrm{W^+}$','$\mathrm{W^-}$'])
+cm.plot()
+plt.title('Normalized Confusion Matrix')
+plt.savefig('CM_normalized.pdf')
+plt.clf()
+
+cm1 = ConfusionMatrixDisplay(unnormalized_cm,display_labels=['$\mathrm{W^+}$','$\mathrm{W^-}$'])
+cm1.plot()
+plt.title('Confusion Matrix')
+plt.savefig('CM_unnormalized.pdf')
 plt.close()
