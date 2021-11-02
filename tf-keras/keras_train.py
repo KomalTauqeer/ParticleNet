@@ -1,5 +1,7 @@
 import numpy as np
 import awkward
+import matplotlib.pyplot as plt
+#import pydot
 
 import logging
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s: %(message)s')
@@ -24,7 +26,7 @@ class Dataset(object):
         self.feature_dict = feature_dict
         if len(feature_dict)==0:
             feature_dict['points'] = ['part_etarel', 'part_phirel']
-            feature_dict['features'] = ['part_pt_log', 'part_e_log', 'part_etarel', 'part_phirel'] #, 'part_charge', 'part_deltaR']
+            feature_dict['features'] = ['part_pt_log', 'part_e_log', 'part_etarel', 'part_phirel', 'part_charge', 'part_deltaR']
             feature_dict['mask'] = ['part_pt_log']
         self.label = label
         self.pad_len = pad_len
@@ -79,10 +81,10 @@ class Dataset(object):
             self._values[k] = self._values[k][shuffle_indices]
         self._label = self._label[shuffle_indices]
 
-#train_dataset = Dataset('preprocessing/converted/train_file_0.awkd', data_format='channel_last')
-#val_dataset = Dataset('preprocessing/converted/val_file_0.awkd', data_format='channel_last')
-train_dataset = Dataset('tutorial_datasets/converted/train_file_0.awkd', data_format='channel_last')
-val_dataset = Dataset('tutorial_datasets/converted/val_file_0.awkd', data_format='channel_last')
+train_dataset = Dataset('preprocessing/converted/train_file_0.awkd', data_format='channel_last')
+val_dataset = Dataset('preprocessing/converted/val_file_0.awkd', data_format='channel_last')
+#train_dataset = Dataset('tutorial_datasets/converted/train_file_0.awkd', data_format='channel_last')
+#val_dataset = Dataset('tutorial_datasets/converted/val_file_0.awkd', data_format='channel_last')
 
 import tensorflow as tf
 from tensorflow import keras
@@ -113,6 +115,7 @@ model.compile(loss='categorical_crossentropy', #categorical_crossentropy
               optimizer=keras.optimizers.Adam(learning_rate=lr_schedule(0)),
               metrics=['accuracy'])
 model.summary()
+#keras.utils.plot_model(model, "multi_input_and_output_model.png", show_shapes=True)
 
 # Prepare model model saving directory.
 import os
@@ -133,7 +136,7 @@ progress_bar = keras.callbacks.ProgbarLogger()
 callbacks = [checkpoint, lr_scheduler, progress_bar]
 
 train_dataset.shuffle()
-model.fit(train_dataset.X, train_dataset.y,
+history = model.fit(train_dataset.X, train_dataset.y,
           batch_size=batch_size,
           epochs=epochs,
 #          epochs=1, # --- train only for 1 epoch here for demonstration ---
@@ -141,4 +144,22 @@ model.fit(train_dataset.X, train_dataset.y,
           shuffle=True,
           callbacks=callbacks)
 
+# summarize history for accuracy
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+plt.title('model accuracy')
+plt.ylabel('accuracy')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.savefig('accuracy.pdf')
+plt.clf()
 
+# summarize history for loss
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.savefig('loss.pdf')
+plt.close()

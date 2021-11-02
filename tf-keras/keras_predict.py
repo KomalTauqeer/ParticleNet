@@ -24,7 +24,7 @@ class Dataset(object):
         self.feature_dict = feature_dict
         if len(feature_dict)==0:
             feature_dict['points'] = ['part_etarel', 'part_phirel']
-            feature_dict['features'] = ['part_pt_log', 'part_e_log', 'part_etarel', 'part_phirel']
+            feature_dict['features'] = ['part_pt_log', 'part_e_log', 'part_etarel', 'part_phirel', 'part_charge', 'part_deltaR']
             feature_dict['mask'] = ['part_pt_log']
         self.label = label
         self.pad_len = pad_len
@@ -79,8 +79,8 @@ class Dataset(object):
             self._values[k] = self._values[k][shuffle_indices]
         self._label = self._label[shuffle_indices]
 
-#test_dataset = Dataset('preprocessing/converted/test_file_0.awkd', data_format='channel_last')
-test_dataset = Dataset('tutorial_datasets/converted/test_file_0.awkd', data_format='channel_last')
+test_dataset = Dataset('preprocessing/converted/test_file_0.awkd', data_format='channel_last')
+#test_dataset = Dataset('tutorial_datasets/converted/test_file_0.awkd', data_format='channel_last')
 
 import tensorflow as tf
 from tensorflow import keras
@@ -88,11 +88,13 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix,ConfusionMatrixDisplay
 
 #Load model
-model = keras.models.load_model("model_checkpoints/particle_net_lite_model.029.h5")
+model = keras.models.load_model("model_checkpoints_1/particle_net_lite_model.021.h5")
+#model = keras.models.load_model("model_checkpoints_2/particle_net_lite_model.030.h5")
 
 test_dataset.shuffle()
 
-PN_output= (model.predict(test_dataset.X)).round()
+#PN_output= (model.predict(test_dataset.X)).round()
+PN_output= (model.predict(test_dataset.X))
 
 truth_labels = test_dataset.y
 
@@ -107,10 +109,10 @@ print (truth_labels)
 #plt.show()
 
 #Plot DNN output
-#plt.hist(PN_output[truth_labels[:]<0.5],30,histtype='step',color='red',label='$\mathrm{W^+}$')
-#plt.hist(PN_output[truth_labels[:]>0.5],30,histtype='step',color='blue',label='$\mathrm{W^-}$')
-#plt.legend(loc='upper right')
-#plt.ylabel('Events')
-#plt.xlabel('PN score')
-#plt.savefig('PN.pdf')
-#plt.close()
+plt.hist(PN_output[truth_labels[:,0]==1,0],30,histtype='step',color='red',label='$\mathrm{W^+}$')
+plt.hist(PN_output[truth_labels[:,0]==0,0],30,histtype='step',color='blue',label='$\mathrm{W^-}$')
+plt.legend(loc='upper right')
+plt.ylabel('Events')
+plt.xlabel('Particle Net score')
+plt.savefig('PN1.pdf')
+plt.close()
