@@ -86,6 +86,7 @@ import tensorflow as tf
 from tensorflow import keras
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix,ConfusionMatrixDisplay
+from sklearn.metrics import roc_curve,RocCurveDisplay,auc
 
 #Load model
 model = keras.models.load_model("model_checkpoints_1/particle_net_lite_model.021.h5")
@@ -115,7 +116,7 @@ plt.close()
 
 
 #Plot Confusion Matrix
-normalized_cm = confusion_matrix(truth_labels.argmax(axis=1),PN_output.argmax(axis=1),normalize = 'all')
+normalized_cm = confusion_matrix(truth_labels.argmax(axis=1),PN_output.argmax(axis=1),normalize = 'true')
 unnormalized_cm = confusion_matrix(truth_labels.argmax(axis=1),PN_output.argmax(axis=1))
 #print (cm)
 cm = ConfusionMatrixDisplay(normalized_cm, display_labels=['$\mathrm{W^+}$','$\mathrm{W^-}$'])
@@ -129,3 +130,37 @@ cm1.plot()
 plt.title('Confusion Matrix')
 plt.savefig('CM_unnormalized.pdf')
 plt.close()
+
+
+#Plot ROC curve
+#fpr, tpr, thresholds = roc_curve(truth_labels.argmax(axis=1), PN_output.argmax(axis=1)) #,pos_label=1)
+#roc_auc = auc(fpr,tpr)
+#roc = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc, estimator_name= 'Particle Net Lite')
+#roc.plot()
+#plt.title('Receiver operating characteristic (ROC)')
+#plt.savefig('ROC.pdf')
+#plt.close()
+
+n_classes =1
+
+# Compute ROC curve and ROC area for each class
+fpr = dict()
+tpr = dict()
+roc_auc = dict()
+for i in range(n_classes):
+    fpr[i], tpr[i], _ = roc_curve(truth_labels[:, i], PN_output[:, i])
+    roc_auc[i] = auc(fpr[i], tpr[i])
+
+# Plot of a ROC curve for a specific class
+for i in range(n_classes):
+    plt.figure()
+    plt.plot(fpr[i], tpr[i], label='ROC curve (area = %0.2f)' % roc_auc[i])
+    plt.plot([0, 1], [0, 1], 'k--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver operating characteristic (ROC)')
+    plt.legend(loc="lower right")
+    plt.savefig('ROC_%s.pdf' % i)
+
