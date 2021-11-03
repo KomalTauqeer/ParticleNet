@@ -89,8 +89,7 @@ from sklearn.metrics import confusion_matrix,ConfusionMatrixDisplay
 from sklearn.metrics import roc_curve,RocCurveDisplay,auc
 
 #Load model
-model = keras.models.load_model("model_checkpoints_1/particle_net_lite_model.021.h5")
-#model = keras.models.load_model("model_checkpoints_2/particle_net_lite_model.030.h5")
+model = keras.models.load_model("particle_net_lite_checkpoints/particle_net_lite_model.030.h5")
 
 test_dataset.shuffle()
 
@@ -111,7 +110,7 @@ plt.hist(PN_output[truth_labels[:,0]==0,0],30,histtype='step',color='blue',label
 plt.legend(loc='upper right')
 plt.ylabel('Events')
 plt.xlabel('Particle Net score')
-plt.savefig('PN1.pdf')
+plt.savefig('PN_score.pdf')
 plt.close()
 
 
