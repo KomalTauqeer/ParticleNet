@@ -79,7 +79,8 @@ class Dataset(object):
             self._values[k] = self._values[k][shuffle_indices]
         self._label = self._label[shuffle_indices]
 
-test_dataset = Dataset('preprocessing/converted/test_file_0.awkd', data_format='channel_last')
+test_dataset = Dataset('preprocessing/converted/test_ssWWVBS_0.awkd', data_format='channel_last')
+#test_dataset = Dataset('preprocessing/converted/test_file_0.awkd', data_format='channel_last')
 #test_dataset = Dataset('tutorial_datasets/converted/test_file_0.awkd', data_format='channel_last')
 
 import tensorflow as tf
@@ -89,7 +90,12 @@ from sklearn.metrics import confusion_matrix,ConfusionMatrixDisplay
 from sklearn.metrics import roc_curve,RocCurveDisplay,auc
 
 #Load model
-model = keras.models.load_model("particle_net_lite_checkpoints/particle_net_lite_model.030.h5")
+model = keras.models.load_model("particle_net_lite_lite_checkpoints/particle_net_lite_model.030.h5")
+#model = keras.models.load_model("with1addvar_particle_net_lite_lite_checkpoints/particle_net_lite_model.028.h5")
+#model = keras.models.load_model("with2addvar_particle_net_lite_lite_checkpoints/particle_net_lite_model.030.h5")
+#model = keras.models.load_model("with3addvar_particle_net_lite_lite_checkpoints/particle_net_lite_model.025.h5")
+#model = keras.models.load_model("with3addvar_particle_net_lite_checkpoints/particle_net_lite_model.012.h5")
+#model = keras.models.load_model("particle_net_lite_checkpoints/particle_net_lite_model.019.h5")
 
 test_dataset.shuffle()
 
@@ -110,7 +116,7 @@ plt.hist(PN_output[truth_labels[:,0]==0,0],30,histtype='step',color='blue',label
 plt.legend(loc='upper right')
 plt.ylabel('Events')
 plt.xlabel('Particle Net score')
-plt.savefig('PN_score.pdf')
+plt.savefig('PN_ssWWVBS_score.pdf')
 plt.close()
 
 
@@ -121,13 +127,13 @@ unnormalized_cm = confusion_matrix(truth_labels.argmax(axis=1),PN_output.argmax(
 cm = ConfusionMatrixDisplay(normalized_cm, display_labels=['$\mathrm{W^+}$','$\mathrm{W^-}$'])
 cm.plot()
 plt.title('Normalized Confusion Matrix')
-plt.savefig('CM_normalized.pdf')
+plt.savefig('CM_ssWWVBS_normalized.pdf')
 plt.clf()
 
 cm1 = ConfusionMatrixDisplay(unnormalized_cm,display_labels=['$\mathrm{W^+}$','$\mathrm{W^-}$'])
 cm1.plot()
 plt.title('Confusion Matrix')
-plt.savefig('CM_unnormalized.pdf')
+plt.savefig('CM_ssWWVBS_unnormalized.pdf')
 plt.close()
 
 
@@ -161,5 +167,5 @@ for i in range(n_classes):
     plt.ylabel('True Positive Rate')
     plt.title('Receiver operating characteristic (ROC)')
     plt.legend(loc="lower right")
-    plt.savefig('ROC_%s.pdf' % i)
+    plt.savefig('ROC_ssWWVBS_%s.pdf' % i)
 

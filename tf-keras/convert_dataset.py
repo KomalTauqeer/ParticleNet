@@ -39,15 +39,16 @@ def _transform(dataframe, start=0, stop=-1, jet_size=0.8):
 
     # outputs
     #Transformation of labels
-    old_label = -1* (df['charge_lep'].values)
+    #FOR TTSEMILEP: old_label = -1* (df['charge_lep'].values)
+    old_label = df['lep_charge']
     #print (old_label)
     new_label = [[1,0] if i == 1 else [0,1] for i in old_label]
     new_label = np.array(new_label)
     #print (new_label)
     v['label'] = new_label
-    
-    #v['label'] = np.stack((_label, 1-_label), axis=-1)
-    #v['train_val_test'] = df['ttv'].values
+    #v['jetcharge'] = np.array(df['fatjet_charge_k0.5'].values)
+    #v['subjet1charge'] = np.array(df['fatjet_subjet1_charge_k0.5'].values)
+    #v['subjet2charge'] = np.array(df['fatjet_subjet2_charge_k0.5'].values)
 
     v['jet_pt'] = jet_p4.pt
     v['jet_eta'] = jet_p4.eta
@@ -113,16 +114,15 @@ def convert(source, destdir, basename, step=None, limit=None):
             continue
         v=_transform(df, start=start, stop=start+step)
         awkward.save(output, v, mode='x')
-
 srcDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/original'
 destDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/converted'
 
 # conver training file
-convert(os.path.join(srcDir, 'Train_TTToSemiLeptonic_2016v3.h5'), destdir=destDir, basename='train_file')
+#convert(os.path.join(srcDir, 'Train_TTToSemiLeptonic_2016v3.h5'), destdir=destDir, basename='train_file')
 
 # conver validation file
-convert(os.path.join(srcDir, 'Val_TTToSemiLeptonic_2016v3.h5'), destdir=destDir, basename='val_file')
+#convert(os.path.join(srcDir, 'Val_TTToSemiLeptonic_2016v3.h5'), destdir=destDir, basename='val_file')
 
 # conver testing file
-convert(os.path.join(srcDir, 'Test_TTToSemiLeptonic_2016v3.h5'), destdir=destDir, basename='test_file')
+convert(os.path.join(srcDir, 'Test_ssWWVBS_2016v3.h5'), destdir=destDir, basename='test_ssWWVBS')
 

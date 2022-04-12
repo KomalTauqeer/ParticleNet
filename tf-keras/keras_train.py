@@ -27,6 +27,7 @@ class Dataset(object):
         if len(feature_dict)==0:
             feature_dict['points'] = ['part_etarel', 'part_phirel']
             feature_dict['features'] = ['part_pt_log', 'part_e_log', 'part_etarel', 'part_phirel', 'part_charge', 'part_deltaR']
+            #feature_dict['add_features'] = ['jetcharge', 'subjet1charge', 'subjet2charge']
             feature_dict['mask'] = ['part_pt_log']
         self.label = label
         self.pad_len = pad_len
@@ -42,17 +43,24 @@ class Dataset(object):
         with awkward.load(self.filepath) as a:
             self._label = a[self.label]
             for k in self.feature_dict:
-                cols = self.feature_dict[k]
-                if not isinstance(cols, (list, tuple)):
-                    cols = [cols]
                 arrs = []
-                for col in cols:
-                    if counts is None:
-                        counts = a[col].counts
-                    else:
-                        assert np.array_equal(counts, a[col].counts)
-                    arrs.append(pad_array(a[col], self.pad_len))
+                if not k == 'add_features':
+                    cols = self.feature_dict[k]
+                    if not isinstance(cols, (list, tuple)):
+                        cols = [cols]
+                    for col in cols:
+                        if counts is None:
+                            counts = a[col].counts
+                        else:
+                            assert np.array_equal(counts, a[col].counts)
+                        arrs.append(pad_array(a[col], self.pad_len))
+                else:
+                    column = self.feature_dict[k]
+                    for col in column:
+                        arrs.append(a[col])
                 self._values[k] = np.stack(arrs, axis=self.stack_axis)
+            #print(self._values['features'])
+                    
         logging.info('Finished loading file %s' % self.filepath)
 
     def __len__(self):
@@ -90,7 +98,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tf_keras_model import get_particle_net, get_particle_net_lite
 
-model_type = 'particle_net_lite' # choose between 'particle_net' and 'particle_net_lite'
+model_type = 'particle_net' # choose between 'particle_net' and 'particle_net_lite'
 num_classes = train_dataset.y.shape[1]
 input_shapes = {k:train_dataset[k].shape[1:] for k in train_dataset.X}
 if 'lite' in model_type:

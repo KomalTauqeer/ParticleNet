@@ -1,3 +1,5 @@
+# activate vir env: conda activate tf
+
 import os
 import sys
 import uproot4
@@ -70,37 +72,56 @@ def split_stratified_into_train_val_test(df_input, stratify_colname='y',
 #Read root file with uproot
 #file = uproot.open('/ceph/ktauqeer/TTSemiLeptonic/2016/RecoNtuples/uhh2.AnalysisModuleRunner.MC.TTToSemiLeptonic_2016v3_PFvars_old.root')
 #file = uproot4.open('/work/ktauqeer/ktauqeerUHH2/CMSSW_10_2_16/src/UHH2/output_TTSemiLeptonic/uhh2.AnalysisModuleRunner.MC.TTToSemiLeptonic_2016v3_testnew.root')
-file = uproot4.open('/ceph/ktauqeer/TTSemiLeptonic/2016/RecoNtuples/uhh2.AnalysisModuleRunner.MC.TTToSemiLeptonic_2016v3_PFvars_PxPyPzEQ.root')
+#file = uproot4.open('/ceph/ktauqeer/TTSemiLeptonic/2016/RecoNtuples/uhh2.AnalysisModuleRunner.MC.TTToSemiLeptonic_2016v3_PFvars_PxPyPzEQ.root')
+file = uproot4.open('/ceph/ktauqeer/WWPolarzation/2016/RecoNtuples/WplusToLNuWplusTo2JJJ/uhh2.AnalysisModuleRunner.MC.WplusToLNuWplusTo2JJJ_EWK_2016v3.root')
+
+file1 = uproot4.open('/ceph/ktauqeer/WWPolarzation/2016/RecoNtuples/WminusToLNuWminusTo2JJJ/uhh2.AnalysisModuleRunner.MC.WminusToLNuWminusTo2JJJ_EWK_2016v3.root')
 
 #Check file contents
 #print (file.classnames())
 
 #Access the tree
 AnalysisTree = file['AnalysisTree']
+AnalysisTree1 = file1['AnalysisTree']
 
 #Show tree contents
 #AnalysisTree.show()
+#AnalysisTree1.show()
 
 #Read TBranches in pandas dataframe
 data = AnalysisTree.arrays(["PF_Px", "PF_Py", "PF_Pz", "PF_E", "PF_q"], library = "pd") 
-labels = AnalysisTree.arrays(["charge_lep"],library = "pd")
+data1 = AnalysisTree1.arrays(["PF_Px", "PF_Py", "PF_Pz", "PF_E", "PF_q"], library = "pd") 
+#FOR TTSEMILEP: data1 = AnalysisTree.arrays(["fatjet_subjet1_charge_k0.5","fatjet_subjet2_charge_k0.5","fatjet_charge_k0.5"],library = "pd")
+#FOR TTSEMILEP: labels = AnalysisTree.arrays(["charge_lep"],library = "pd")
+labels = AnalysisTree.arrays(["lep_charge"],library = "pd")
+labels1 = AnalysisTree1.arrays(["lep_charge"],library = "pd")
 
 #Unstack Multi-Level structure
 data = data.unstack()
+data1 = data1.unstack()
 
 #data.columns = data.columns.get_level_values(0)
 
 #Remove subentries level and rename dataframe columns to match those used in ParticleNet tutorial dataset
 data.columns = [a[0] + "_" +str(a[1]) for a in data.columns.to_flat_index()]
+data1.columns = [a[0] + "_" +str(a[1]) for a in data1.columns.to_flat_index()]
 
+#FOR TTSEMILEP: data = data.join(data1)
 data = data.join(labels)
+data1 = data1.join(labels1)
+final_data = pandas.concat([data,data1],ignore_index = True) #combine the data from both files W+ and W-
 
-print (data)
+print (final_data)
+print(final_data.loc[:,'lep_charge'])
 
-df_train, df_val, df_test = split_stratified_into_train_val_test(data, stratify_colname='charge_lep', frac_train=0.60, frac_val=0.20, frac_test=0.20)
+#df_train, df_val, df_test = split_stratified_into_train_val_test(data, stratify_colname='charge_lep', frac_train=0.60, frac_val=0.20, frac_test=0.20)
+#df_train, df_val, df_test = split_stratified_into_train_val_test(final_data, stratify_colname='lep_charge', frac_train=0.60, frac_val=0.20, frac_test=0.20)
 
 #Save the data in .h5 file
-df_train.to_hdf('original/Train_TTToSemiLeptonic_2016v3.h5', key='table', mode='w')
-df_test.to_hdf('original/Test_TTToSemiLeptonic_2016v3.h5', key='table', mode='w')
-df_val.to_hdf('original/Val_TTToSemiLeptonic_2016v3.h5', key='table', mode='w')
+#df_train.to_hdf('original/Train_TTToSemiLeptonic_2016v3.h5', key='table', mode='w')
+#df_test.to_hdf('original/Test_TTToSemiLeptonic_2016v3.h5', key='table', mode='w')
+#df_val.to_hdf('original/Val_TTToSemiLeptonic_2016v3.h5', key='table', mode='w')
+#df_train.to_hdf('original/Train_ssWWVBS_2016v3.h5', key='table', mode='w')
+final_data.to_hdf('original/Test_ssWWVBS_2016v3.h5', key='table', mode='w')
+#df_val.to_hdf('original/Val_ssWWVBS_2016v3.h5', key='table', mode='w')
 
