@@ -1,0 +1,17 @@
+######### This file explains how to use ParticleNet on uhh2 ntuples ####################
+
+The ParticleNet takes input in .h5 format. It uses a script tf-keras/convert_dataset.py to convert the input from .h5 to .awkd format and also calculate the input variables/features via the lorentz vector of the particle e.g jet_pt, jet_mass etc.
+
+In order to use the ntuples from uhh2 framework, one needs to convert the uhh2 ntuples in .h5 format first.
+
+To do this, I have created a directory tf-keras/preprocessing in which the script convert_root_to_hdf5.py does all the work. 
+
+Before you start make sure you have activated the virtual enviroment via conda activate tf. (The enviroment file .yml is in the repository just in case you need to create a new enviroment on your machine)
+
+The script tf-keras/preprocessing/convert_root_to_hdf5.py uses uproot4 to read uhh2ntuples branches from the root files in pandas dataframe. After doing some unstacking of the data and combining all the columns together the input is saved to .h5 format in the tf-keras/preprocessing/original folder. Please note that this script also splits the datset in to training, testing and validation datasets via split_stratified_into_train_val_test class. If you are converting your uhh2ntuples only for testing the ParticleNet performance not for the training you need to make slight modifications in this script accordingly.
+
+This .h5 format can now be used via tf-keras/convert_dataset.py to transform the input in .awkd format that goes directly to the particlenet. The output from tf-keras/convert_dataset.py is saved in preprocessing/converted.
+
+The script keras_train.py takes the .awkd files from preprocessing/converted and trains the model. The best model is saved in the check_points diretories. To analyze the training, training curves are also saved in the pdf format at the end of the training. 
+
+Once you are satisfied with the training of the network, you can use keras_predict to make predictions on converted/test.awkd dataset. 
