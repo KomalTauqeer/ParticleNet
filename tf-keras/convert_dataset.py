@@ -39,8 +39,11 @@ def _transform(dataframe, start=0, stop=-1, jet_size=0.8):
 
     # outputs
     #Transformation of labels
-    #FOR TTSEMILEP: old_label = -1* (df['charge_lep'].values)
-    old_label = df['lep_charge']
+    #FOR TTSEMILEP MC: old_label = -1* (df['charge_lep'].values) # this is because the charge_lep variable saved in my ntuples is inverted. To get the true charge of lep it needs to get multiplied with -1
+    # For ssWW VBS: old_label = df['lep_charge']
+    # For TT SingleMuon data:
+    old_label = -1* (df['charge_lep'].values)
+
     #print (old_label)
     new_label = [[1,0] if i == 1 else [0,1] for i in old_label]
     new_label = np.array(new_label)
@@ -117,12 +120,13 @@ def convert(source, destdir, basename, step=None, limit=None):
 srcDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/original'
 destDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/converted'
 
-# conver training file
+# convert training file
 #convert(os.path.join(srcDir, 'Train_TTToSemiLeptonic_2016v3.h5'), destdir=destDir, basename='train_file')
 
-# conver validation file
+# convert validation file
 #convert(os.path.join(srcDir, 'Val_TTToSemiLeptonic_2016v3.h5'), destdir=destDir, basename='val_file')
 
-# conver testing file
-convert(os.path.join(srcDir, 'Test_ssWWVBS_2016v3.h5'), destdir=destDir, basename='test_ssWWVBS')
+# convert testing file
+#convert(os.path.join(srcDir, 'Test_ssWWVBS_2016v3.h5'), destdir=destDir, basename='test_ssWWVBS')
+convert(os.path.join(srcDir, 'Test_SingleMuon_2016.h5'), destdir=destDir, basename='test_SingleMuon_2016')
 

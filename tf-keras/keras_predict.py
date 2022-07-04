@@ -1,4 +1,5 @@
 import numpy as np
+from numpy import savetxt
 import awkward
 
 import logging
@@ -79,7 +80,9 @@ class Dataset(object):
             self._values[k] = self._values[k][shuffle_indices]
         self._label = self._label[shuffle_indices]
 
+#test_dataset = Dataset('preprocessing/converted/test_SingleMuon_2016_0.awkd', data_format='channel_last')
 test_dataset = Dataset('preprocessing/converted/test_ssWWVBS_0.awkd', data_format='channel_last')
+#test file TT MC
 #test_dataset = Dataset('preprocessing/converted/test_file_0.awkd', data_format='channel_last')
 #test_dataset = Dataset('tutorial_datasets/converted/test_file_0.awkd', data_format='channel_last')
 
@@ -109,6 +112,14 @@ print (PN_output)
 print ("Truth: ")
 print (truth_labels)
 
+#savetxt("PNOutput_SingleMuon.csv", PN_output, delimiter=',')
+#savetxt("TrueOutput_SingleMuon.csv", truth_labels, delimiter=',')
+
+#savetxt("PNOutput_TTMC.csv", PN_output, delimiter=',')
+#savetxt("TrueOutput_TTMC.csv", truth_labels, delimiter=',')
+
+savetxt("PNOutput_ssWWVBS.csv", PN_output, delimiter=',')
+savetxt("TrueOutput_ssWWVBS.csv", truth_labels, delimiter=',')
 
 #Plot DNN output
 plt.hist(PN_output[truth_labels[:,0]==1,0],30,histtype='step',color='red',label='$\mathrm{W^+}$')
@@ -116,7 +127,9 @@ plt.hist(PN_output[truth_labels[:,0]==0,0],30,histtype='step',color='blue',label
 plt.legend(loc='upper right')
 plt.ylabel('Events')
 plt.xlabel('Particle Net score')
-plt.savefig('PNLite_ssWWVBS_score.pdf')
+plt.savefig('PNLite_ssWWVBS_score.svg')
+#plt.savefig('PNLite_SingleMuon_score.svg')
+#plt.savefig('PNLite_TTMC_score.svg')
 plt.close()
 
 
@@ -127,13 +140,17 @@ unnormalized_cm = confusion_matrix(truth_labels.argmax(axis=1),PN_output.argmax(
 cm = ConfusionMatrixDisplay(normalized_cm, display_labels=['$\mathrm{W^+}$','$\mathrm{W^-}$'])
 cm.plot()
 plt.title('Normalized Confusion Matrix')
-plt.savefig('PNLite_CM_ssWWVBS_normalized.pdf')
+plt.savefig('PNLite_CM_ssWWVBS_normalized.svg')
+#plt.savefig('PNLite_CM_SingleMuon_normalized.svg')
+#plt.savefig('PNLite_CM_TTMC_normalized.svg')
 plt.clf()
 
 cm1 = ConfusionMatrixDisplay(unnormalized_cm,display_labels=['$\mathrm{W^+}$','$\mathrm{W^-}$'])
 cm1.plot()
 plt.title('Confusion Matrix')
-plt.savefig('PNLite_CM_ssWWVBS_unnormalized.pdf')
+plt.savefig('PNLite_CM_ssWWVBS_unnormalized.svg')
+#plt.savefig('PNLite_CM_SingleMuon_unnormalized.svg')
+#plt.savefig('PNLite_CM_TTMC_unnormalized.svg')
 plt.close()
 
 
@@ -167,5 +184,7 @@ for i in range(n_classes):
     plt.ylabel('True Positive Rate')
     plt.title('Receiver operating characteristic (ROC)')
     plt.legend(loc="lower right")
-    plt.savefig('PNLite_ROC_ssWWVBS_%s.pdf' % i)
+    plt.savefig('PNLite_ROC_ssWWVBS_%s.svg' % i)
+    #plt.savefig('PNLite_ROC_SingleMuon_%s.svg' % i)
+    #plt.savefig('PNLite_ROC_TTMC_%s.svg' % i)
 
