@@ -94,10 +94,6 @@ from sklearn.metrics import roc_curve,RocCurveDisplay,auc
 
 #Load model
 #model = keras.models.load_model("particle_net_lite_lite_checkpoints/particle_net_lite_model.030.h5")
-#model = keras.models.load_model("with1addvar_particle_net_lite_lite_checkpoints/particle_net_lite_model.028.h5")
-#model = keras.models.load_model("with2addvar_particle_net_lite_lite_checkpoints/particle_net_lite_model.030.h5")
-#model = keras.models.load_model("with3addvar_particle_net_lite_lite_checkpoints/particle_net_lite_model.025.h5")
-#model = keras.models.load_model("with3addvar_particle_net_lite_checkpoints/particle_net_lite_model.012.h5")
 model = keras.models.load_model("particle_net_lite_checkpoints/particle_net_lite_model.019.h5")
 
 test_dataset.shuffle()

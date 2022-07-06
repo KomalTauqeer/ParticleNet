@@ -1,0 +1,13 @@
+import pandas as pd
+df1 = pd.read_csv('PNOutput_TTMC.csv', header=None)
+df1.rename(columns={0: '0', 1: '1'}, inplace=True)
+df1.to_csv('PNOutput_TTMC_with_col.csv', index=False)
+df2 = pd.read_csv('TrueOutput_TTMC.csv', header=None)
+df2.rename(columns={0: '0', 1: '1'}, inplace=True)
+df2.to_csv('TrueOutput_TTMC_with_col.csv', index=False)
+df3 = pd.read_csv('PNOutput_SingleMuon.csv', header=None)
+df3.rename(columns={0: '0', 1: '1'}, inplace=True)
+df3.to_csv('PNOutput_SingleMuon_with_col.csv', index=False)
+df4 = pd.read_csv('TrueOutput_SingleMuon.csv', header=None)
+df4.rename(columns={0: '0', 1: '1'}, inplace=True)
+df4.to_csv('TrueOutput_SingleMuon_with_col.csv', index=False)
