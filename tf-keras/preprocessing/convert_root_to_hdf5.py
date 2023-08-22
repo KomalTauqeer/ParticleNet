@@ -73,9 +73,10 @@ def split_stratified_into_train_val_test(df_input, stratify_colname='y',
 
 #TTSemiLep MC file
 #file = uproot4.open('/ceph/ktauqeer/TTSemiLeptonic/2016/RecoNtuples/uhh2.AnalysisModuleRunner.MC.TTToSemiLeptonic_2016v3_PFvars_PxPyPzEQ.root')
+file = uproot4.open('/ceph/ktauqeer/ULNtuples/UL16postVFP/TTCR/TTCR_TTToSemiLeptonic_v1.root')
 
 #TTSemiLep Data file
-file = uproot4.open('/ceph/ktauqeer/TTSemiLeptonic/2016/condorDataNtuples/uhh2.AnalysisModuleRunner.Data.SingleMuon_2016_JetConstits_Pt200_condor.root')
+#file = uproot4.open('/ceph/ktauqeer/TTSemiLeptonic/2016/condorDataNtuples/uhh2.AnalysisModuleRunner.Data.SingleMuon_2016_JetConstits_Pt200_condor.root')
 
 #ssWW VBS files
 #file = uproot4.open('/ceph/ktauqeer/WWPolarzation/2016/RecoNtuples/WplusToLNuWplusTo2JJJ/uhh2.AnalysisModuleRunner.MC.WplusToLNuWplusTo2JJJ_EWK_2016v3.root')
@@ -124,7 +125,7 @@ print (data.loc[:,'charge_lep'])
 
 #Splitting of the dataset for training
 
-#df_train, df_val, df_test = split_stratified_into_train_val_test(data, stratify_colname='charge_lep', frac_train=0.60, frac_val=0.20, frac_test=0.20)
+df_train, df_val, df_test = split_stratified_into_train_val_test(data, stratify_colname='charge_lep', frac_train=0.60, frac_val=0.20, frac_test=0.20)
 #df_train, df_val, df_test = split_stratified_into_train_val_test(final_data, stratify_colname='lep_charge', frac_train=0.60, frac_val=0.20, frac_test=0.20)
 
 #Save the data in .h5 file
@@ -134,4 +135,7 @@ print (data.loc[:,'charge_lep'])
 #df_train.to_hdf('original/Train_ssWWVBS_2016v3.h5', key='table', mode='w')
 #final_data.to_hdf('original/Test_ssWWVBS_2016v3.h5', key='table', mode='w')
 #df_val.to_hdf('original/Val_ssWWVBS_2016v3.h5', key='table', mode='w')
-data.to_hdf('original/Test_SingleMuon_2016.h5', key='table', mode='w')
+#data.to_hdf('original/Test_SingleMuon_2016.h5', key='table', mode='w')
+df_train.to_hdf('original/Train_TTToSemiLeptonic_UL16postVFP.h5', key='table', mode='w')
+df_test.to_hdf('original/Test_TTToSemiLeptonic_UL16postVFP.h5', key='table', mode='w')
+df_val.to_hdf('original/Val_TTToSemiLeptonic_UL16postVFP.h5', key='table', mode='w')

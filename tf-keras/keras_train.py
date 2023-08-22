@@ -98,7 +98,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tf_keras_model import get_particle_net, get_particle_net_lite
 
-model_type = 'particle_net' # choose between 'particle_net' and 'particle_net_lite'
+model_type = 'particle_net_lite' # choose between 'particle_net' and 'particle_net_lite'
 num_classes = train_dataset.y.shape[1]
 input_shapes = {k:train_dataset[k].shape[1:] for k in train_dataset.X}
 if 'lite' in model_type:

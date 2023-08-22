@@ -121,12 +121,14 @@ srcDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/original'
 destDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/converted'
 
 # convert training file
-#convert(os.path.join(srcDir, 'Train_TTToSemiLeptonic_2016v3.h5'), destdir=destDir, basename='train_file')
+convert(os.path.join(srcDir, 'Train_TTToSemiLeptonic_UL16postVFP.h5'), destdir=destDir, basename='train_file')
 
 # convert validation file
-#convert(os.path.join(srcDir, 'Val_TTToSemiLeptonic_2016v3.h5'), destdir=destDir, basename='val_file')
+convert(os.path.join(srcDir, 'Val_TTToSemiLeptonic_UL16postVFP.h5'), destdir=destDir, basename='val_file')
 
 # convert testing file
+convert(os.path.join(srcDir, 'Test_TTToSemiLeptonic_UL16postVFP.h5'), destdir=destDir, basename='test_file')
+
 #convert(os.path.join(srcDir, 'Test_ssWWVBS_2016v3.h5'), destdir=destDir, basename='test_ssWWVBS')
-convert(os.path.join(srcDir, 'Test_SingleMuon_2016.h5'), destdir=destDir, basename='test_SingleMuon_2016')
+#convert(os.path.join(srcDir, 'Test_SingleMuon_2016.h5'), destdir=destDir, basename='test_SingleMuon_2016')
 
