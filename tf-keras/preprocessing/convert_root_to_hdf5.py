@@ -2,11 +2,14 @@
 
 import os
 import sys
+sys.path.append('../') 
 import uproot4
 import awkward as ak
-import pandas 
+import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
+from sklearn.utils import shuffle
+import plot
 
 def split_stratified_into_train_val_test(df_input, stratify_colname='y',
                                          frac_train=0.6, frac_val=0.15, frac_test=0.25,
@@ -68,80 +71,82 @@ def split_stratified_into_train_val_test(df_input, stratify_colname='y',
 
     return df_train, df_val, df_test
 
+def root2df(sfile, tree_name, variables, **kwargs):
+    f = uproot4.open(sfile)
+    tree = f[tree_name]
+    df = tree.arrays(variables, library="pd")
+    return df
 
-#Read root file with uproot
+def unstack_multi_df(df):
+    df = df.unstack()
+    #Remove subentries level and rename dataframe columns 
+    df.columns = [a[0] + "_" +str(a[1]) for a in df.columns.to_flat_index()]
+    return df
 
-#TTSemiLep MC file
-#file = uproot4.open('/ceph/ktauqeer/TTSemiLeptonic/2016/RecoNtuples/uhh2.AnalysisModuleRunner.MC.TTToSemiLeptonic_2016v3_PFvars_PxPyPzEQ.root')
-#file = uproot4.open('/ceph/ktauqeer/ULNtuples/UL16postVFP/TTCR/TTCR_TTToSemiLeptonic_v1.root')
-file = uproot4.open('/ceph/ktauqeer/ULNtuples/UL16postVFP/VBSSR/VBSSR_WZ_combined_v1.root')
-#file = uproot4.open('/ceph/ktauqeer/ULNtuples/UL16postVFP/VBSSR/VBSSR_osWW_combined_v1.root')
-#file = uproot4.open('/ceph/ktauqeer/ULNtuples/UL16postVFP/VBSSR/VBSSR_ssWW_combined_v1.root')
+def pandas_to_hdf5(df, outdir, outfilename):
+    df.to_hdf(outdir + '/'+ outfilename +'.h5', key='table', mode='w')
+    
+def save_dataset(dataset, outdir, outfilename):
+    pandas_to_hdf5(dataset, outdir, outfilename)
 
-#TTSemiLep Data file
-#file = uproot4.open('/ceph/ktauqeer/TTSemiLeptonic/2016/condorDataNtuples/uhh2.AnalysisModuleRunner.Data.SingleMuon_2016_JetConstits_Pt200_condor.root')
+def prepare_input_dataset(filepath, filename, sample_type):
+    if sample_type == 'TT' or sample_type == 'VBS':
+        variables = ["PF_Px", "PF_Py", "PF_Pz", "PF_E", "PF_q"]
+        plotvars = ["PF_q", "PF_logpt", "PF_deta", "PF_dphi", "PF_logE", "PF_logrelE" , "PF_logrelpt", "PF_deltaR", "lep_charge"]
+        labels = ["lep_charge"]
+        treename = "AnalysisTree"
+    elif sample_type == 'ZJets':
+        variables = ["PF_Px", "PF_Py", "PF_Pz", "PF_E", "PF_q"]
+        plotvars = ["PF_q", "PF_logpt", "PF_deta", "PF_dphi", "PF_logE", "PF_logrelE" , "PF_logrelpt", "PF_deltaR"]
+        labels = ["lep_charge"]
+        treename = "AnalysisTree"
+    elif sample_type == 'JetClassWToQQ':
+        variables = ["part_px", "part_py", "part_pz", "part_energy", "part_charge"]
+        labels = ["aux_genpart_pid"]
+        treename = "tree"
+    elif sample_type == 'JetClassZToQQ':
+        variables = ["part_px", "part_py", "part_pz", "part_energy", "part_charge"]
+        labels = ["aux_genpart_pid"]
+        treename = "tree"
+    dataset = root2df(filepath+filename, treename, variables)
+    plot_dataset = root2df(filepath+filename, treename, plotvars)
+    if sample_type == 'TT' or sample_type == 'VBS':
+        labels = root2df(filepath+filename, treename, labels)
+    dataset = unstack_multi_df(dataset)
+    if sample_type == 'ZJets':
+        dataset['lep_charge'] = np.array(0.)
+        plot_dataset['lep_charge'] = np.array(0.) 
+    if sample_type == 'TT' or sample_type == 'VBS': 
+        dataset = dataset.join(labels)
+    return dataset, plot_dataset
 
-#ssWW VBS files
-#file = uproot4.open('/ceph/ktauqeer/WWPolarzation/2016/RecoNtuples/WplusToLNuWplusTo2JJJ/uhh2.AnalysisModuleRunner.MC.WplusToLNuWplusTo2JJJ_EWK_2016v3.root')
-#file1 = uproot4.open('/ceph/ktauqeer/WWPolarzation/2016/RecoNtuples/WminusToLNuWminusTo2JJJ/uhh2.AnalysisModuleRunner.MC.WminusToLNuWminusTo2JJJ_EWK_2016v3.root')
+def merge_df(first, second, index_ignore=True):
+    df = pd.concat((first, second), ignore_index=index_ignore)
+    return df
 
-#Check file contents
-#print (file.classnames())
+def shuffle_df(dataset, random_state=42):
+    return shuffle(dataset, random_state)
 
-#Access the tree
-AnalysisTree = file['AnalysisTree']
-#AnalysisTree1 = file1['AnalysisTree']
+def main():
+    TT_df, plot_TT_df = prepare_input_dataset('/ceph/ktauqeer/ULNtuples/UL18/TTCR/', 'TTCR_TTToSemiLeptonic.root', 'TT')
+    ZJets_df, plot_ZJets_df = prepare_input_dataset('/ceph/ktauqeer/ULNtuples/UL18/ZJetsCR/', 'ZJetsCR_ZJets_UL18_0To645000.root', 'ZJets')
+    
+    #Prepare dataframes to plot input variables of PN
+    #Wp_df = plot_TT_df[plot_TT_df['lep_charge']==1.0]
+    #Wn_df = plot_TT_df[plot_TT_df['lep_charge']==-1.0]
+    #Z_df = plot_ZJets_df
+    #varlist = ["PF_q", "PF_logpt", "PF_deta", "PF_dphi", "PF_logE", "PF_logrelE" , "PF_logrelpt", "PF_deltaR"]
+    #plot.inputvars_multitrain(Wp_df, Wn_df, Z_df, varlist)
+    #print ("Input variables plotted......")
 
-#Show tree contents
-#AnalysisTree.show()
-#AnalysisTree1.show()
+    #Merge two dataframe and split in train, test and val sets
+    data = merge_df(TT_df, ZJets_df)
+    df_train, df_val, df_test = split_stratified_into_train_val_test(data, stratify_colname='lep_charge', frac_train=0.60, frac_val=0.20, frac_test=0.20, random_state=42)
+    print (df_train)
+    pandas_to_hdf5(df_train, "original", "WpWnZ_train")
+    pandas_to_hdf5(df_val, "original", "WpWnZ_val")
+    pandas_to_hdf5(df_test, "original", "WpWnZ_test")
 
-#Read TBranches in pandas dataframe
-data = AnalysisTree.arrays(["PF_Px", "PF_Py", "PF_Pz", "PF_E", "PF_q"], library = "pd") 
-#data1 = AnalysisTree1.arrays(["PF_Px", "PF_Py", "PF_Pz", "PF_E", "PF_q"], library = "pd") 
-#FOR TTSEMILEP: data1 = AnalysisTree.arrays(["fatjet_subjet1_charge_k0.5","fatjet_subjet2_charge_k0.5","fatjet_charge_k0.5"],library = "pd")
-#FOR TTSEMILEP: 
-labels = AnalysisTree.arrays(["charge_lep"],library = "pd")
-#FOR sswwVBS: labels = AnalysisTree.arrays(["lep_charge"],library = "pd")
-#FOR sswwVBS: labels1 = AnalysisTree1.arrays(["lep_charge"],library = "pd")
+if __name__ == "__main__":
+    main()
 
-#Unstack Multi-Level structure
-data = data.unstack()
-#data1 = data1.unstack()
-
-#data.columns = data.columns.get_level_values(0)
-
-#Remove subentries level and rename dataframe columns to match those used in ParticleNet tutorial dataset
-data.columns = [a[0] + "_" +str(a[1]) for a in data.columns.to_flat_index()]
-#data1.columns = [a[0] + "_" +str(a[1]) for a in data1.columns.to_flat_index()]
-
-#FOR TTSEMILEP if you want to add jetcharge vars: data = data.join(data1)
-data = data.join(labels)
-#data1 = data1.join(labels1)
-# For ssww VBS: final_data = pandas.concat([data,data1],ignore_index = True) #combine the data from both files W+ and W-
-
-# For ssww VBS: print (final_data)
-# For ssww VBS: print(final_data.loc[:,'lep_charge'])
-print (data)
-print (data.loc[:,'charge_lep'])
-
-
-#Splitting of the dataset for training
-
-#df_train, df_val, df_test = split_stratified_into_train_val_test(data, stratify_colname='charge_lep', frac_train=0.60, frac_val=0.20, frac_test=0.20)
-#df_train, df_val, df_test = split_stratified_into_train_val_test(final_data, stratify_colname='lep_charge', frac_train=0.60, frac_val=0.20, frac_test=0.20)
-
-#Save the data in .h5 file
-#df_train.to_hdf('original/Train_TTToSemiLeptonic_2016v3.h5', key='table', mode='w')
-#df_test.to_hdf('original/Test_TTToSemiLeptonic_2016v3.h5', key='table', mode='w')
-#df_val.to_hdf('original/Val_TTToSemiLeptonic_2016v3.h5', key='table', mode='w')
-#df_train.to_hdf('original/Train_ssWWVBS_2016v3.h5', key='table', mode='w')
-#final_data.to_hdf('original/Test_ssWWVBS_2016v3.h5', key='table', mode='w')
-#df_val.to_hdf('original/Val_ssWWVBS_2016v3.h5', key='table', mode='w')
-#data.to_hdf('original/Test_SingleMuon_2016.h5', key='table', mode='w')
-#df_train.to_hdf('original/Train_TTToSemiLeptonic_UL16postVFP.h5', key='table', mode='w')
-#df_test.to_hdf('original/Test_TTToSemiLeptonic_UL16postVFP.h5', key='table', mode='w')
-#df_val.to_hdf('original/Val_TTToSemiLeptonic_UL16postVFP.h5', key='table', mode='w')
-#data.to_hdf('original/VBSSR_ssWW_UL16postVFP.h5', key='table', mode='w')
-#data.to_hdf('original/VBSSR_osWW_UL16postVFP.h5', key='table', mode='w')
-data.to_hdf('original/VBSSR_WZ_UL16postVFP.h5', key='table', mode='w')

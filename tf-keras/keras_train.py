@@ -1,6 +1,12 @@
+import os
+import sys
 import numpy as np
 import awkward
+import tensorflow as tf
+from tensorflow import keras
+from tf_keras_model import get_particle_net, get_particle_net_lite
 import matplotlib.pyplot as plt
+import utilis
 #import pydot
 
 import logging
@@ -27,7 +33,6 @@ class Dataset(object):
         if len(feature_dict)==0:
             feature_dict['points'] = ['part_etarel', 'part_phirel']
             feature_dict['features'] = ['part_pt_log', 'part_e_log', 'part_etarel', 'part_phirel', 'part_charge', 'part_deltaR']
-            #feature_dict['add_features'] = ['jetcharge', 'subjet1charge', 'subjet2charge']
             feature_dict['mask'] = ['part_pt_log']
         self.label = label
         self.pad_len = pad_len
@@ -89,26 +94,23 @@ class Dataset(object):
             self._values[k] = self._values[k][shuffle_indices]
         self._label = self._label[shuffle_indices]
 
-train_dataset = Dataset('preprocessing/converted/train_file_0.awkd', data_format='channel_last')
-val_dataset = Dataset('preprocessing/converted/val_file_0.awkd', data_format='channel_last')
-#train_dataset = Dataset('tutorial_datasets/converted/train_file_0.awkd', data_format='channel_last')
-#val_dataset = Dataset('tutorial_datasets/converted/val_file_0.awkd', data_format='channel_last')
-
-import tensorflow as tf
-from tensorflow import keras
-from tf_keras_model import get_particle_net, get_particle_net_lite
+#Load training and validation dataset
+train_dataset = Dataset('preprocessing/converted/WpWnZ_train_0.awkd', data_format='channel_last')
+val_dataset = Dataset('preprocessing/converted/WpWnZ_val_0.awkd', data_format='channel_last')
 
 model_type = 'particle_net_lite' # choose between 'particle_net' and 'particle_net_lite'
 num_classes = train_dataset.y.shape[1]
 input_shapes = {k:train_dataset[k].shape[1:] for k in train_dataset.X}
+
 if 'lite' in model_type:
     model = get_particle_net_lite(num_classes, input_shapes)
 else:
     model = get_particle_net(num_classes, input_shapes)
 
-# Training parameters
-batch_size = 1024 if 'lite' in model_type else 384
-epochs = 30
+#Training parameters
+#batch_size = 1024 if 'lite' in model_type else 384
+batch_size = 384 if 'lite' in model_type else 384
+epochs = 40
 
 def lr_schedule(epoch):
     lr = 1e-3
@@ -119,14 +121,14 @@ def lr_schedule(epoch):
     logging.info('Learning rate: %f'%lr)
     return lr
 
-model.compile(loss='categorical_crossentropy', #categorical_crossentropy
+model.compile(loss='categorical_crossentropy', 
               optimizer=keras.optimizers.Adam(learning_rate=lr_schedule(0)),
               metrics=['accuracy'])
+
 model.summary()
 #keras.utils.plot_model(model, "multi_input_and_output_model.png", show_shapes=True)
 
 # Prepare model model saving directory.
-import os
 save_dir = 'model_checkpoints'
 model_name = '%s_model.{epoch:03d}.h5' % model_type
 if not os.path.isdir(save_dir):
@@ -144,10 +146,10 @@ progress_bar = keras.callbacks.ProgbarLogger()
 callbacks = [checkpoint, lr_scheduler, progress_bar]
 
 train_dataset.shuffle()
+
 history = model.fit(train_dataset.X, train_dataset.y,
           batch_size=batch_size,
           epochs=epochs,
-#          epochs=1, # --- train only for 1 epoch here for demonstration ---
           validation_data=(val_dataset.X, val_dataset.y),
           shuffle=True,
           callbacks=callbacks)
@@ -171,3 +173,4 @@ plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
 plt.savefig('loss.pdf')
 plt.close()
+

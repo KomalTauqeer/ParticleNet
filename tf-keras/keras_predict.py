@@ -1,6 +1,8 @@
+import sys
 import numpy as np
 from numpy import savetxt
 import awkward
+import utilis
 
 import logging
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s: %(message)s')
@@ -80,45 +82,54 @@ class Dataset(object):
             self._values[k] = self._values[k][shuffle_indices]
         self._label = self._label[shuffle_indices]
 
-#test_dataset = Dataset('preprocessing/converted/test_SingleMuon_2016_0.awkd', data_format='channel_last')
-#test_dataset = Dataset('preprocessing/converted/test_ssWWVBS_0.awkd', data_format='channel_last')
-#test_dataset = Dataset('preprocessing/converted/ssWW_UL16postVFP_0.awkd', data_format='channel_last')
-test_dataset = Dataset('preprocessing/converted/WZ_UL16postVFP_0.awkd', data_format='channel_last')
-#test file TT MC
-#test_dataset = Dataset('preprocessing/converted/test_file_0.awkd', data_format='channel_last')
-#test_dataset = Dataset('tutorial_datasets/converted/test_file_0.awkd', data_format='channel_last')
+#train_dataset = Dataset('preprocessing/converted/WpWnZ_train_0.awkd', data_format='channel_last')
+test_dataset = Dataset('preprocessing/converted/WpWnZ_test_0.awkd', data_format='channel_last')
 
 import tensorflow as tf
 from tensorflow import keras
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix,ConfusionMatrixDisplay
 from sklearn.metrics import roc_curve,RocCurveDisplay,auc
+from sklearn.metrics import classification_report
 
 #Load model
 #model = keras.models.load_model("particle_net_lite_lite_checkpoints/particle_net_lite_model.030.h5")
 #model = keras.models.load_model("particle_net_lite_checkpoints/particle_net_lite_model.019.h5")
-model = keras.models.load_model("model_checkpoints/particle_net_lite_model.015.h5")
+model = keras.models.load_model("model_checkpoints_lite/particle_net_lite_model.017.h5")
 
+#train_dataset.shuffle()
 test_dataset.shuffle()
 
-#PN_output= (model.predict(test_dataset.X)).round()
+#PN_output= (model.predict(train_dataset.X))
 PN_output= (model.predict(test_dataset.X))
 
+#truth_labels = train_dataset.y
 truth_labels = test_dataset.y
 
 print ("Output: ")
 print (PN_output)
+predicted_value = np.argmax(PN_output, axis=1)
 print ("Truth: ")
 print (truth_labels)
+true_value = np.argmax(truth_labels, axis=1) 
+
+utilis.plot_confusion_matrix(true_value,predicted_value,sample_type= 'test',classes=["W+", "W-", "Z"], normalize=True,
+#utilis.plot_confusion_matrix(true_value,predicted_value,sample_type= 'train',classes=["W+", "W-", "Z"], normalize=True,
+                      title='Normalized confusion matrix')
+print (classification_report(true_value,predicted_value, target_names=["W+", "W-", "Z"]))
 
 #savetxt("PNOutput_SingleMuon.csv", PN_output, delimiter=',')
 #savetxt("TrueOutput_SingleMuon.csv", truth_labels, delimiter=',')
 
-savetxt("PNOutput_TTMC.csv", PN_output, delimiter=',')
-savetxt("TrueOutput_TTMC.csv", truth_labels, delimiter=',')
+#savetxt("PNOutput_TTMC.csv", PN_output, delimiter=',')
+#savetxt("TrueOutput_TTMC.csv", truth_labels, delimiter=',')
 
 #savetxt("PNOutput_ssWWVBS.csv", PN_output, delimiter=',')
 #savetxt("TrueOutput_ssWWVBS.csv", truth_labels, delimiter=',')
+
+# ROC plot
+#utilis.roc(np.argmax(train_dataset.y, axis = 1), np.argmax(PN_output, axis = 1), None, ".", "train")
+sys.exit()
 
 #Plot DNN output
 plt.hist(PN_output[truth_labels[:,0]==1,0],30,histtype='step',color='red',label='$\mathrm{W^+}$')
@@ -126,12 +137,8 @@ plt.hist(PN_output[truth_labels[:,0]==0,0],30,histtype='step',color='blue',label
 plt.legend(loc='upper right')
 plt.ylabel('Events')
 plt.xlabel('Particle Net score')
-plt.savefig('PNLite_WZVBS_score.svg')
-#plt.savefig('PNLite_ssWWVBS_score.svg')
-#plt.savefig('PNLite_SingleMuon_score.svg')
-#plt.savefig('PNLite_TTMC_score.svg')
+plt.savefig('PNLite_WToQQ_score.svg')
 plt.close()
-
 
 #Plot Confusion Matrix
 normalized_cm = confusion_matrix(truth_labels.argmax(axis=1),PN_output.argmax(axis=1),normalize = 'true')
@@ -140,19 +147,13 @@ unnormalized_cm = confusion_matrix(truth_labels.argmax(axis=1),PN_output.argmax(
 cm = ConfusionMatrixDisplay(normalized_cm, display_labels=['$\mathrm{W^+}$','$\mathrm{W^-}$'])
 cm.plot()
 plt.title('Normalized Confusion Matrix')
-plt.savefig('PNLite_CM_WZVBS_normalized.svg')
-#plt.savefig('PNLite_CM_ssWWVBS_normalized.svg')
-#plt.savefig('PNLite_CM_SingleMuon_normalized.svg')
-#plt.savefig('PNLite_CM_TTMC_normalized.svg')
+plt.savefig('PNLite_CM_TT_fixed_normalized.svg')
 plt.clf()
 
 cm1 = ConfusionMatrixDisplay(unnormalized_cm,display_labels=['$\mathrm{W^+}$','$\mathrm{W^-}$'])
 cm1.plot()
 plt.title('Confusion Matrix')
-plt.savefig('PNLite_CM_WZVBS_normalized.svg')
-#plt.savefig('PNLite_CM_ssWWVBS_normalized.svg')
-#plt.savefig('PNLite_CM_SingleMuon_unnormalized.svg')
-#plt.savefig('PNLite_CM_TTMC_unnormalized.svg')
+plt.savefig('PNLite_CM_TT_fixed_normalized.svg')
 plt.close()
 
 
@@ -186,8 +187,5 @@ for i in range(n_classes):
     plt.ylabel('True Positive Rate')
     plt.title('Receiver operating characteristic (ROC)')
     plt.legend(loc="lower right")
-    plt.savefig('PNLite_ROC_WZVBS_%s.svg' % i)
-    #plt.savefig('PNLite_ROC_ssWWVBS_%s.svg' % i)
-    #plt.savefig('PNLite_ROC_SingleMuon_%s.svg' % i)
-    #plt.savefig('PNLite_ROC_TTMC_%s.svg' % i)
+    plt.savefig('PNLite_ROC_JetClassWToqq_%s.svg' % i)
 
