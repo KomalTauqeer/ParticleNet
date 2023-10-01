@@ -1,6 +1,7 @@
 import numpy as np
 import awkward
 import matplotlib.pyplot as plt
+import sys
 #import pydot
 
 import logging
@@ -59,7 +60,7 @@ class Dataset(object):
                     for col in column:
                         arrs.append(a[col])
                 self._values[k] = np.stack(arrs, axis=self.stack_axis)
-            #print(self._values['features'])
+            print(self._values['features'])
                     
         logging.info('Finished loading file %s' % self.filepath)
 
@@ -98,6 +99,9 @@ import tensorflow as tf
 from tensorflow import keras
 from tf_keras_model import get_particle_net, get_particle_net_lite
 
+print (train_dataset.y)
+#print (train_dataset.X)
+sys.exit()
 model_type = 'particle_net_lite' # choose between 'particle_net' and 'particle_net_lite'
 num_classes = train_dataset.y.shape[1]
 input_shapes = {k:train_dataset[k].shape[1:] for k in train_dataset.X}

@@ -1,7 +1,7 @@
 import awkward as ak
 import pandas
 
-f = ak.load("val_file_0.awkd")
+f = ak.load("train_file_0.awkd")
 #df = ak.pandas.df(f)
 #print(df)
 #print(f["part_deltaR"])
@@ -14,6 +14,6 @@ f = ak.load("val_file_0.awkd")
 #print(f["subjet1charge"])
 #print(f["subjet2charge"])
 
-v1 = f['jetcharge']
-print(type(v1))
-print(v1)
+l = print(f["label"])
+print(type(l))
+print(l)

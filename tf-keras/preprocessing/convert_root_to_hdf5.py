@@ -73,8 +73,8 @@ def split_stratified_into_train_val_test(df_input, stratify_colname='y',
 
 #TTSemiLep MC file
 #file = uproot4.open('/ceph/ktauqeer/TTSemiLeptonic/2016/RecoNtuples/uhh2.AnalysisModuleRunner.MC.TTToSemiLeptonic_2016v3_PFvars_PxPyPzEQ.root')
-#file = uproot4.open('/ceph/ktauqeer/ULNtuples/UL16postVFP/TTCR/TTCR_TTToSemiLeptonic_v1.root')
-file = uproot4.open('/ceph/ktauqeer/ULNtuples/UL16postVFP/VBSSR/VBSSR_WZ_combined_v1.root')
+file = uproot4.open('/ceph/ktauqeer/ULNtuples/UL16postVFP/TTCR/TTCR_TTToSemiLeptonic.root')
+#file = uproot4.open('/ceph/ktauqeer/ULNtuples/UL16postVFP/VBSSR/VBSSR_WZ_combined_v1.root')
 #file = uproot4.open('/ceph/ktauqeer/ULNtuples/UL16postVFP/VBSSR/VBSSR_osWW_combined_v1.root')
 #file = uproot4.open('/ceph/ktauqeer/ULNtuples/UL16postVFP/VBSSR/VBSSR_ssWW_combined_v1.root')
 
@@ -101,7 +101,7 @@ data = AnalysisTree.arrays(["PF_Px", "PF_Py", "PF_Pz", "PF_E", "PF_q"], library 
 #data1 = AnalysisTree1.arrays(["PF_Px", "PF_Py", "PF_Pz", "PF_E", "PF_q"], library = "pd") 
 #FOR TTSEMILEP: data1 = AnalysisTree.arrays(["fatjet_subjet1_charge_k0.5","fatjet_subjet2_charge_k0.5","fatjet_charge_k0.5"],library = "pd")
 #FOR TTSEMILEP: 
-labels = AnalysisTree.arrays(["charge_lep"],library = "pd")
+labels = AnalysisTree.arrays(["lep_charge"],library = "pd")
 #FOR sswwVBS: labels = AnalysisTree.arrays(["lep_charge"],library = "pd")
 #FOR sswwVBS: labels1 = AnalysisTree1.arrays(["lep_charge"],library = "pd")
 
@@ -123,13 +123,15 @@ data = data.join(labels)
 # For ssww VBS: print (final_data)
 # For ssww VBS: print(final_data.loc[:,'lep_charge'])
 print (data)
-print (data.loc[:,'charge_lep'])
+print (data.loc[:,'lep_charge'])
 
 
 #Splitting of the dataset for training
 
-#df_train, df_val, df_test = split_stratified_into_train_val_test(data, stratify_colname='charge_lep', frac_train=0.60, frac_val=0.20, frac_test=0.20)
+df_train, df_val, df_test = split_stratified_into_train_val_test(data, stratify_colname='lep_charge', frac_train=0.60, frac_val=0.20, frac_test=0.20)
 #df_train, df_val, df_test = split_stratified_into_train_val_test(final_data, stratify_colname='lep_charge', frac_train=0.60, frac_val=0.20, frac_test=0.20)
+print (df_train.head(5))
+print (df_val.head(5))
 
 #Save the data in .h5 file
 #df_train.to_hdf('original/Train_TTToSemiLeptonic_2016v3.h5', key='table', mode='w')
@@ -139,9 +141,9 @@ print (data.loc[:,'charge_lep'])
 #final_data.to_hdf('original/Test_ssWWVBS_2016v3.h5', key='table', mode='w')
 #df_val.to_hdf('original/Val_ssWWVBS_2016v3.h5', key='table', mode='w')
 #data.to_hdf('original/Test_SingleMuon_2016.h5', key='table', mode='w')
-#df_train.to_hdf('original/Train_TTToSemiLeptonic_UL16postVFP.h5', key='table', mode='w')
-#df_test.to_hdf('original/Test_TTToSemiLeptonic_UL16postVFP.h5', key='table', mode='w')
-#df_val.to_hdf('original/Val_TTToSemiLeptonic_UL16postVFP.h5', key='table', mode='w')
+df_train.to_hdf('original/Train_TTToSemiLeptonic_UL16postVFP.h5', key='table', mode='w')
+df_test.to_hdf('original/Test_TTToSemiLeptonic_UL16postVFP.h5', key='table', mode='w')
+df_val.to_hdf('original/Val_TTToSemiLeptonic_UL16postVFP.h5', key='table', mode='w')
 #data.to_hdf('original/VBSSR_ssWW_UL16postVFP.h5', key='table', mode='w')
 #data.to_hdf('original/VBSSR_osWW_UL16postVFP.h5', key='table', mode='w')
-data.to_hdf('original/VBSSR_WZ_UL16postVFP.h5', key='table', mode='w')
+#data.to_hdf('original/VBSSR_WZ_UL16postVFP.h5', key='table', mode='w')
