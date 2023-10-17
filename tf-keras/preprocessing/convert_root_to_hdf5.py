@@ -129,15 +129,15 @@ def shuffle_df(dataset, random_state=42):
 
 def main():
     TT_df, plot_TT_df = prepare_input_dataset('/ceph/ktauqeer/ULNtuples/UL18/TTCR/', 'TTCR_TTToSemiLeptonic.root', 'TT')
-    ZJets_df, plot_ZJets_df = prepare_input_dataset('/ceph/ktauqeer/ULNtuples/UL18/ZJetsCR/', 'ZJetsCR_ZJets_UL18_0To645000.root', 'ZJets')
+    ZJets_df, plot_ZJets_df = prepare_input_dataset('/ceph/ktauqeer/ULNtuples/UL18/ZJetsCR/', 'ZJetsCR_ZJets_UL18_genmatchedZ_0To645000.root', 'ZJets')
     
     #Prepare dataframes to plot input variables of PN
-    #Wp_df = plot_TT_df[plot_TT_df['lep_charge']==1.0]
-    #Wn_df = plot_TT_df[plot_TT_df['lep_charge']==-1.0]
-    #Z_df = plot_ZJets_df
-    #varlist = ["PF_q", "PF_logpt", "PF_deta", "PF_dphi", "PF_logE", "PF_logrelE" , "PF_logrelpt", "PF_deltaR"]
-    #plot.inputvars_multitrain(Wp_df, Wn_df, Z_df, varlist)
-    #print ("Input variables plotted......")
+    Wp_df = plot_TT_df[plot_TT_df['lep_charge']==1.0]
+    Wn_df = plot_TT_df[plot_TT_df['lep_charge']==-1.0]
+    Z_df = plot_ZJets_df
+    varlist = ["PF_q", "PF_logpt", "PF_deta", "PF_dphi", "PF_logE", "PF_logrelE" , "PF_logrelpt", "PF_deltaR"]
+    plot.inputvars_multitrain(Wp_df, Wn_df, Z_df, varlist)
+    print ("Input variables plotted......")
 
     #Merge two dataframe and split in train, test and val sets
     data = merge_df(TT_df, ZJets_df)

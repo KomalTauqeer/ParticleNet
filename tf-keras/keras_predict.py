@@ -82,8 +82,8 @@ class Dataset(object):
             self._values[k] = self._values[k][shuffle_indices]
         self._label = self._label[shuffle_indices]
 
-#train_dataset = Dataset('preprocessing/converted/WpWnZ_train_0.awkd', data_format='channel_last')
-test_dataset = Dataset('preprocessing/converted/WpWnZ_test_0.awkd', data_format='channel_last')
+train_dataset = Dataset('preprocessing/converted/WpWnZ_train_0.awkd', data_format='channel_last')
+#test_dataset = Dataset('preprocessing/converted/WpWnZ_test_0.awkd', data_format='channel_last')
 
 import tensorflow as tf
 from tensorflow import keras
@@ -95,16 +95,17 @@ from sklearn.metrics import classification_report
 #Load model
 #model = keras.models.load_model("particle_net_lite_lite_checkpoints/particle_net_lite_model.030.h5")
 #model = keras.models.load_model("particle_net_lite_checkpoints/particle_net_lite_model.019.h5")
-model = keras.models.load_model("model_checkpoints_lite/particle_net_lite_model.017.h5")
+#model = keras.models.load_model("model_checkpoints_lite/particle_net_lite_model.017.h5")
+model = keras.models.load_model("PNLL_checkpoints_gpu_Oct17_lrsch_valshuffle/particle_net_lite_lite_model.030.h5")
 
-#train_dataset.shuffle()
-test_dataset.shuffle()
+train_dataset.shuffle()
+#test_dataset.shuffle()
 
-#PN_output= (model.predict(train_dataset.X))
-PN_output= (model.predict(test_dataset.X))
+PN_output= (model.predict(train_dataset.X))
+#PN_output= (model.predict(test_dataset.X))
 
-#truth_labels = train_dataset.y
-truth_labels = test_dataset.y
+truth_labels = train_dataset.y
+#truth_labels = test_dataset.y
 
 print ("Output: ")
 print (PN_output)
@@ -113,8 +114,8 @@ print ("Truth: ")
 print (truth_labels)
 true_value = np.argmax(truth_labels, axis=1) 
 
-utilis.plot_confusion_matrix(true_value,predicted_value,sample_type= 'test',classes=["W+", "W-", "Z"], normalize=True,
-#utilis.plot_confusion_matrix(true_value,predicted_value,sample_type= 'train',classes=["W+", "W-", "Z"], normalize=True,
+#utilis.plot_confusion_matrix(true_value,predicted_value,sample_type= 'test',classes=["W+", "W-", "Z"], normalize=True,
+utilis.plot_confusion_matrix(true_value,predicted_value,sample_type= 'train',classes=["W+", "W-", "Z"], normalize=True,
                       title='Normalized confusion matrix')
 print (classification_report(true_value,predicted_value, target_names=["W+", "W-", "Z"]))
 

@@ -113,8 +113,8 @@ def convert(source, destdir, basename, step=None, limit=None):
         v=_transform(df, start=start, stop=start+step)
         awkward.save(output, v, mode='x')
 
-srcDir = '/work/ktauqeer/ParticleNet_test/tf-keras/preprocessing/original'
-destDir = '/work/ktauqeer/ParticleNet_test/tf-keras/preprocessing/converted'
+srcDir = '/work/ktauqeer/ParticleNet_multi/tf-keras/preprocessing/original'
+destDir = '/work/ktauqeer/ParticleNet_multi/tf-keras/preprocessing/converted'
 
 convert(os.path.join(srcDir, 'WpWnZ_train.h5'), destdir=destDir, basename='WpWnZ_train')
 convert(os.path.join(srcDir, 'WpWnZ_val.h5'), destdir=destDir, basename='WpWnZ_val')

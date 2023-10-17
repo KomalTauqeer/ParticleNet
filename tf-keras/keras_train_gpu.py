@@ -1,5 +1,6 @@
 import os
 import sys
+import datetime
 import numpy as np
 import awkward
 import tensorflow as tf
@@ -8,13 +9,22 @@ from tf_keras_model import get_particle_net, get_particle_net_lite
 import matplotlib.pyplot as plt
 import utilis
 #import pydot
-
-#Some setting for gpu's
-tf.config.set_soft_device_placement(True)
-tf.debugging.set_log_device_placement(True)
-
 import logging
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s: %(message)s')
+
+#Some setting for gpu's
+#tf.config.set_soft_device_placement(True)
+tf.debugging.set_log_device_placement(True)
+gpus = tf.config.list_physical_devices('GPU')
+if gpus:
+  # Restrict TensorFlow to only use the first GPU
+  try:
+    tf.config.set_visible_devices(gpus[1], 'GPU')
+    logical_gpus = tf.config.list_logical_devices('GPU')
+    print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPU")
+  except RuntimeError as e:
+    # Visible devices must be set before GPUs have been initialized
+    print(e)
 
 def stack_arrays(a, keys, axis=-1):
     flat_arr = np.stack([a[k].flatten() for k in keys], axis=axis)
@@ -102,7 +112,7 @@ class Dataset(object):
 train_dataset = Dataset('preprocessing/converted/WpWnZ_train_0.awkd', data_format='channel_last')
 val_dataset = Dataset('preprocessing/converted/WpWnZ_val_0.awkd', data_format='channel_last')
 
-model_type = 'particle_net_lite' # choose between 'particle_net' and 'particle_net_lite'
+model_type = 'particle_net_lite_lite' # choose between 'particle_net' and 'particle_net_lite'
 num_classes = train_dataset.y.shape[1]
 input_shapes = {k:train_dataset[k].shape[1:] for k in train_dataset.X}
 
@@ -112,12 +122,11 @@ else:
     model = get_particle_net(num_classes, input_shapes)
 
 #Training parameters
-#batch_size = 1024 if 'lite' in model_type else 384
-batch_size = 32 if 'lite' in model_type else 128
-epochs = 100
+batch_size = 1024 if 'lite' in model_type else 128
+epochs = 30
 
 def lr_schedule(epoch):
-    lr = 1e-3
+    lr = 1e-4
     if epoch > 10:
         lr *= 0.1
     elif epoch > 20:
@@ -125,15 +134,29 @@ def lr_schedule(epoch):
     logging.info('Learning rate: %f'%lr)
     return lr
 
+def lr_custom(epoch):
+    lr = 5e-4
+    if epoch < 8:
+        lr = lr/0.1
+    elif epoch > 8 and epoch < 12:
+        lr = lr
+    elif epoch > 12:
+        lr *= 1/5*10e-2
+    logging.info('Learning rate: %f'%lr)
+    return lr
+
+opt = keras.optimizers.Adam(lr_schedule(0))
+
 model.compile(loss='categorical_crossentropy', 
-              optimizer=keras.optimizers.Adam(learning_rate=lr_schedule(0)),
+              #optimizer=keras.optimizers.Adam(learning_rate=lr_schedule(0),weight_decay=1e-4),
+              optimizer=opt,
               metrics=['accuracy'])
 
-model.summary()
+#model.summary()
 #keras.utils.plot_model(model, "multi_input_and_output_model.png", show_shapes=True)
 
 # Prepare model model saving directory.
-save_dir = 'model_checkpoints'
+save_dir = 'model_checkpoints_gpu'
 model_name = '%s_model.{epoch:03d}.h5' % model_type
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
@@ -147,11 +170,14 @@ checkpoint = keras.callbacks.ModelCheckpoint(filepath=filepath,
 
 lr_scheduler = keras.callbacks.LearningRateScheduler(lr_schedule)
 progress_bar = keras.callbacks.ProgbarLogger()
-earlystopping = keras.callbacks.EarlyStopping(verbose=True, patience=10, monitor='val_loss')
+earlystopping = keras.callbacks.EarlyStopping(verbose=True, patience=5, monitor='val_loss')
+log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 
-callbacks = [checkpoint, lr_scheduler, progress_bar, earlystopping]
+callbacks = [checkpoint, lr_scheduler, progress_bar, earlystopping, tensorboard_callback]
 
 train_dataset.shuffle()
+val_dataset.shuffle()
 
 history = model.fit(train_dataset.X, train_dataset.y,
           batch_size=batch_size,
@@ -166,7 +192,7 @@ plt.plot(history.history['val_accuracy'])
 plt.title('model accuracy')
 plt.ylabel('accuracy')
 plt.xlabel('epoch')
-plt.legend(['train', 'test'], loc='upper left')
+plt.legend(['train', 'val'], loc='upper left')
 plt.savefig('accuracy.pdf')
 plt.clf()
 
@@ -176,7 +202,7 @@ plt.plot(history.history['val_loss'])
 plt.title('model loss')
 plt.ylabel('loss')
 plt.xlabel('epoch')
-plt.legend(['train', 'test'], loc='upper left')
+plt.legend(['train', 'val'], loc='upper left')
 plt.savefig('loss.pdf')
 plt.close()
 
