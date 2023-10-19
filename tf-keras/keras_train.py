@@ -99,12 +99,10 @@ import tensorflow as tf
 from tensorflow import keras
 from tf_keras_model import get_particle_net, get_particle_net_lite
 
-print (train_dataset.y)
-#print (train_dataset.X)
-sys.exit()
 model_type = 'particle_net_lite' # choose between 'particle_net' and 'particle_net_lite'
 num_classes = train_dataset.y.shape[1]
 input_shapes = {k:train_dataset[k].shape[1:] for k in train_dataset.X}
+
 if 'lite' in model_type:
     model = get_particle_net_lite(num_classes, input_shapes)
 else:
@@ -148,6 +146,8 @@ progress_bar = keras.callbacks.ProgbarLogger()
 callbacks = [checkpoint, lr_scheduler, progress_bar]
 
 train_dataset.shuffle()
+val_dataset.shuffle()
+
 history = model.fit(train_dataset.X, train_dataset.y,
           batch_size=batch_size,
           epochs=epochs,
