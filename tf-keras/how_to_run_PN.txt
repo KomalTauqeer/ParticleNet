@@ -8,7 +8,7 @@ To do this, I have created a directory tf-keras/preprocessing in which the scrip
 
 Before you start make sure you have activated the virtual enviroment via conda activate tf. (The enviroment file .yml is in the repository just in case you need to create a new enviroment on your machine)
 
-The script tf-keras/preprocessing/convert_root_to_hdf5.py uses uproot4 to read uhh2ntuples branches from the root files in pandas dataframe. After doing some unstacking of the data and combining all the columns together the input is saved to .h5 format in the tf-keras/preprocessing/original folder. Please note that this script also splits the datset in to training, testing and validation datasets via split_stratified_into_train_val_test class. If you are converting your uhh2ntuples only for testing the ParticleNet performance not for the training you need to make slight modifications in this script accordingly.
+The script tf-keras/preprocessing/convert_root_to_hdf5.py uses uproot4 to read uhh2ntuples branches from the root files in pandas dataframe. After doing some unstacking of the data and combining all the columns together the input is saved to .h5 format in the tf-keras/preprocessing/original folder. Please note that this script also splits the datset in to training, testing and validation datasets via sklearn train_test_split class. If you are converting your uhh2ntuples only for testing the ParticleNet performance not for the training you need to make slight modifications in this script accordingly.
 
 This .h5 format can now be used via tf-keras/convert_dataset.py to transform the input in .awkd format that goes directly to the particlenet. The output from tf-keras/convert_dataset.py is saved in preprocessing/converted.
 
