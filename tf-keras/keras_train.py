@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s: %(m
 
 parser = optparse.OptionParser()
 parser.add_option("--use_gpu" , "--use_gpu", action="store_true", dest = "gpu_train", help = "gpu training", default = False)
-parser.add_option("--gpu_device", type = "int", help = "choose from 0,1,2,3", default= 1)
+parser.add_option("--gpu_device", type = "int", help = "choose from 0,1,2,3", default= 2)
 (options,args) = parser.parse_args()
 gpu_training = options.gpu_train
 gpu_device = options.gpu_device
@@ -117,7 +117,6 @@ def train():
     print ("Start loading the training and validation dataset .....")
     train_dataset = Dataset('preprocessing/converted/Train_TT_UL18_0.awkd', data_format='channel_last')
     val_dataset = Dataset('preprocessing/converted/Val_TT_UL18_0.awkd', data_format='channel_last')
-    
     model_type = 'particle_net_lite' # choose between 'particle_net' and 'particle_net_lite'
     print ("Using model {}".format(model_type))
     num_classes = train_dataset.y.shape[1]
@@ -132,27 +131,27 @@ def train():
     
     # Training parameters
     batch_size = 1024 if 'lite' in model_type else 384
-    epochs = 1
+    epochs = 30
     print ("Hyper parameters: \n Epochs: {} \n batch_size: {} \n".format(epochs,batch_size))
-    
-    #def lr_schedule(epoch):
-    #    lr = 1e-3
-    #    if epoch > 10:
-    #        lr *= 0.1
-    #    elif epoch > 20:
-    #        lr *= 0.01
-    #    logging.info('Learning rate: %f'%lr)
-    #    return lr
-    
+
+    def lr_schedule(epoch):
+        lr = 1e-3
+        if epoch > 10:
+            lr *= 0.1
+        elif epoch > 20:
+            lr *= 0.01
+        logging.info('Learning rate: %f'%lr)
+        return lr
+
     model.compile(loss='binary_crossentropy', 
-                  #optimizer=keras.optimizers.Adam(learning_rate=lr_schedule(0)),
-                  optimizer=keras.optimizers.Adam(learning_rate=0.00001),
+                  #optimizer=keras.optimizers.Adam(learning_rate=0.00001),
+                  optimizer=keras.optimizers.Adam(learning_rate=lr_schedule(0)),
                   metrics=['accuracy'])
     #model.summary()
     #keras.utils.plot_model(model, "multi_input_and_output_model.png", show_shapes=True)
-    
+
     # Prepare model model saving directory.
-    save_dir = 'training_results/model_checkpoints'
+    save_dir = 'training_results_Oct23_lrsch_1e-3/model_checkpoints'
     model_name = '%s_model.{epoch:03d}.h5' % model_type
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
@@ -164,12 +163,11 @@ def train():
                                  verbose=1,
                                  save_best_only=True)
     
-    #lr_scheduler = keras.callbacks.LearningRateScheduler(lr_schedule)
+    lr_scheduler = keras.callbacks.LearningRateScheduler(lr_schedule)
     progress_bar = keras.callbacks.ProgbarLogger()
     log_dir = "training_results/logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
-    #callbacks = [checkpoint, lr_scheduler, progress_bar]
-    callbacks = [checkpoint, progress_bar, tensorboard_callback]
+    callbacks = [checkpoint, lr_scheduler, progress_bar, tensorboard_callback]
     
     train_dataset.shuffle()
     val_dataset.shuffle()
@@ -188,7 +186,7 @@ def train():
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
     plt.legend(['train', 'val'], loc='upper left')
-    plt.savefig('{}/accuracy.pdf'.format('training_results'))
+    plt.savefig('{}/accuracy.pdf'.format('training_results_Oct23_lrsch_1e-3'))
     plt.clf()
     
     # summarize history for loss
@@ -198,7 +196,7 @@ def train():
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.legend(['train', 'val'], loc='upper left')
-    plt.savefig('{}/loss.pdf'.format('training_results'))
+    plt.savefig('{}/loss.pdf'.format('training_results_Oct23_lrsch_1e-3'))
     plt.close()
 
 def main():

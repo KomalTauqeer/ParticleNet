@@ -11,7 +11,7 @@ parser = optparse.OptionParser()
 parser.add_option("--year", "--y", dest="year", default= "UL18")
 parser.add_option("--sample", "--s", dest="sample", default= "TT")
 parser.add_option("--region", "--r", dest="region", default= "TTCR")
-parser.add_option("--outdir", "--odir", dest="out_dir", default= "original")
+parser.add_option("--outdir", "--odir", dest="outdir", default= "original")
 
 (options,args) = parser.parse_args()
 year = options.year
@@ -30,11 +30,12 @@ dataset = shuffle(dataset, random_state=42)
 df_train, df_valandtest = train_test_split(dataset, test_size=0.4)
 df_val, df_test = train_test_split(df_valandtest, test_size=0.5)
 
-print (df_train.head(5))
+print (df_train)
 print (df_val.head(5))
 print (df_test.head(5))
 print ("Number of W+: {} ".format(dataset['lep_charge'].value_counts()[-1.0]))
 print ("Number of W-: {} ".format(dataset['lep_charge'].value_counts()[1.0]))
+sys.exit()
 
 if not os.path.isdir(outdir):
     os.mkdir(outdir)

@@ -55,7 +55,7 @@ def plot_confusion_matrix(output_score, truth_labels, ofile):
     plt.close()
 
 def compute_ROC_curve(output_score, truth_labels, ofile):
-    n_classes =1
+    n_classes = 1
     
     # Compute ROC curve and ROC area for each class
     fpr = dict()
@@ -79,17 +79,19 @@ def compute_ROC_curve(output_score, truth_labels, ofile):
         plt.savefig(ofile+'_ROC_{}.pdf'.format(i))
     
 def main():
-    outdir = 'eval_results'
+    outdir = 'eval_results_lrsch_1e-3'
     if not os.path.isdir(outdir):
         os.makedirs(outdir)
  
-    model = 'PNL_WpWn_models_Oct20/particle_net_lite_model.030.h5'
+    #model = 'PNL_WpWn_models_Oct20/particle_net_lite_model.030.h5'
+    #model = 'training_results_Oct23_lrsch_1e-4/model_checkpoints/particle_net_lite_model.030.h5'
+    model = 'training_results_Oct23_lrsch_1e-3/model_checkpoints/particle_net_lite_model.025.h5'
     file_to_eval = 'preprocessing/converted/Test_TT_UL18_0.awkd'
 
     predicted_scores, true_scores = eval_test_file(file_to_eval, model)
-    plot_output_score(predicted_scores, true_scores, outdir+'/'+'PNL_WpWn_testTT_m30')
-    plot_confusion_matrix(predicted_scores, true_scores, outdir+'/'+'PNL_WpWn_testTT_m30')
-    compute_ROC_curve(predicted_scores, true_scores, outdir+'/'+'PNL_WpWn_testTT_m30')
+    plot_output_score(predicted_scores, true_scores, outdir+'/'+'PNL_WpWn_testTT_m25')
+    plot_confusion_matrix(predicted_scores, true_scores, outdir+'/'+'PNL_WpWn_testTT_m25')
+    compute_ROC_curve(predicted_scores, true_scores, outdir+'/'+'PNL_WpWn_testTT_m25')
 
 if __name__ == "__main__":
     main()
