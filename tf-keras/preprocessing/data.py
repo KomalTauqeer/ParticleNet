@@ -1,15 +1,7 @@
-# activate vir env: conda activate tf
-
-import os
-import sys
-sys.path.append('../') 
 import uproot4
-import awkward as ak
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.utils import shuffle
-import plot
 
 def split_stratified_into_train_val_test(df_input, stratify_colname='y',
                                          frac_train=0.6, frac_val=0.15, frac_test=0.25,
@@ -66,7 +58,6 @@ def split_stratified_into_train_val_test(df_input, stratify_colname='y',
                                                       stratify=y_temp,
                                                       test_size=relative_frac_test,
                                                       random_state=random_state)
-
     assert len(df_input) == len(df_train) + len(df_val) + len(df_test)
 
     return df_train, df_val, df_test
@@ -85,40 +76,24 @@ def unstack_multi_df(df):
 
 def pandas_to_hdf5(df, outdir, outfilename):
     df.to_hdf(outdir + '/'+ outfilename +'.h5', key='table', mode='w')
-    
+
 def save_dataset(dataset, outdir, outfilename):
     pandas_to_hdf5(dataset, outdir, outfilename)
 
-def prepare_input_dataset(filepath, filename, sample_type):
-    if sample_type == 'TT' or sample_type == 'VBS':
-        variables = ["PF_Px", "PF_Py", "PF_Pz", "PF_E", "PF_q"]
-        plotvars = ["PF_q", "PF_logpt", "PF_deta", "PF_dphi", "PF_logE", "PF_logrelE" , "PF_logrelpt", "PF_deltaR", "lep_charge"]
-        labels = ["lep_charge"]
-        treename = "AnalysisTree"
-    elif sample_type == 'ZJets':
-        variables = ["PF_Px", "PF_Py", "PF_Pz", "PF_E", "PF_q"]
-        plotvars = ["PF_q", "PF_logpt", "PF_deta", "PF_dphi", "PF_logE", "PF_logrelE" , "PF_logrelpt", "PF_deltaR"]
-        labels = ["lep_charge"]
-        treename = "AnalysisTree"
-    elif sample_type == 'JetClassWToQQ':
-        variables = ["part_px", "part_py", "part_pz", "part_energy", "part_charge"]
-        labels = ["aux_genpart_pid"]
-        treename = "tree"
-    elif sample_type == 'JetClassZToQQ':
-        variables = ["part_px", "part_py", "part_pz", "part_energy", "part_charge"]
-        labels = ["aux_genpart_pid"]
-        treename = "tree"
+def prepare_input_multitrain(filepath, filename, treename, sample_type, variables, labels):
     dataset = root2df(filepath+filename, treename, variables)
-    plot_dataset = root2df(filepath+filename, treename, plotvars)
-    if sample_type == 'TT' or sample_type == 'VBS':
-        labels = root2df(filepath+filename, treename, labels)
     dataset = unstack_multi_df(dataset)
     if sample_type == 'ZJets':
-        dataset['lep_charge'] = np.array(0.)
-        plot_dataset['lep_charge'] = np.array(0.) 
-    if sample_type == 'TT' or sample_type == 'VBS': 
+        dataset[labels] = np.array(0.)
+    if sample_type == 'TT': 
+        labels = root2df(filepath+filename, treename, labels)
         dataset = dataset.join(labels)
-    return dataset, plot_dataset
+    return dataset
+
+def prepare_input_eval(filepath, filename, treename, variables):
+    dataset = root2df(filepath+filename, treename, variables)
+    dataset = unstack_multi_df(dataset)
+    return dataset
 
 def merge_df(first, second, index_ignore=True):
     df = pd.concat((first, second), ignore_index=index_ignore)
@@ -127,26 +102,4 @@ def merge_df(first, second, index_ignore=True):
 def shuffle_df(dataset, random_state=42):
     return shuffle(dataset, random_state)
 
-def main():
-    TT_df, plot_TT_df = prepare_input_dataset('/ceph/ktauqeer/ULNtuples/UL18/TTCR/', 'TTCR_TTToSemiLeptonic.root', 'TT')
-    ZJets_df, plot_ZJets_df = prepare_input_dataset('/ceph/ktauqeer/ULNtuples/UL18/ZJetsCR/', 'ZJetsCR_ZJets_UL18_genmatchedZ_0To645000.root', 'ZJets')
-    
-    #Prepare dataframes to plot input variables of PN
-    Wp_df = plot_TT_df[plot_TT_df['lep_charge']==1.0]
-    Wn_df = plot_TT_df[plot_TT_df['lep_charge']==-1.0]
-    Z_df = plot_ZJets_df
-    varlist = ["PF_q", "PF_logpt", "PF_deta", "PF_dphi", "PF_logE", "PF_logrelE" , "PF_logrelpt", "PF_deltaR"]
-    plot.inputvars_multitrain(Wp_df, Wn_df, Z_df, varlist)
-    print ("Input variables plotted......")
-
-    #Merge two dataframe and split in train, test and val sets
-    data = merge_df(TT_df, ZJets_df)
-    df_train, df_val, df_test = split_stratified_into_train_val_test(data, stratify_colname='lep_charge', frac_train=0.60, frac_val=0.20, frac_test=0.20, random_state=42)
-    print (df_train)
-    pandas_to_hdf5(df_train, "original", "WpWnZ_train")
-    pandas_to_hdf5(df_val, "original", "WpWnZ_val")
-    pandas_to_hdf5(df_test, "original", "WpWnZ_test")
-
-if __name__ == "__main__":
-    main()
-
+                                                

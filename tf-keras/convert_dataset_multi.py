@@ -1,13 +1,29 @@
 import os
+import optparse
 import pandas as pd
 import numpy as np
 import awkward
 import uproot_methods
 #from sklearn import preprocessing
 from sklearn.preprocessing import MultiLabelBinarizer
-
 import logging
 logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] %(levelname)s: %(message)s')
+
+parser = optparse.OptionParser()
+parser.add_option("--train" , "--train", action="store_true", dest = "do_train", help = "train mode", default = False)
+parser.add_option("--eval" , "--eval", action="store_true", dest = "do_eval", help = "eval mode", default = False)
+parser.add_option("--year", "--y", dest="year", default= "UL18")
+parser.add_option("--region", "--r", dest="region", default= None)
+parser.add_option("--sample", "--s", dest="sample", default= None)
+parser.add_option("--outdir", "--odir", dest="outdir", default= "converted")
+parser.add_option("--srcdir", "--sdir", dest="srcdir", default= "original")
+(options,args) = parser.parse_args()
+year = options.year
+region = options.region
+sample = options.sample
+outdir = options.outdir
+srcdir = options.srcdir
+
 
 def _transform(dataframe, start=0, stop=-1, jet_size=0.8):
     from collections import OrderedDict
@@ -38,16 +54,17 @@ def _transform(dataframe, start=0, stop=-1, jet_size=0.8):
     jet_p4 = p4.sum()
 
     # outputs
-    old_label = df['lep_charge']
-    print (np.count_nonzero(old_label==0.0))
-    print (np.count_nonzero(old_label==1.0))
-    print (np.count_nonzero(old_label==-1.0))
-    new_label = []
-    for i in old_label:
-        if i == 1: new_label.append([1,0,0])
-        if i == -1:new_label.append([0,1,0])
-        if i == 0: new_label.append( [0,0,1])
-    v['label'] = np.array(new_label)
+    if options.do_train:
+        old_label = df['lep_charge']
+        print (np.count_nonzero(old_label==0.0))
+        print (np.count_nonzero(old_label==1.0))
+        print (np.count_nonzero(old_label==-1.0))
+        new_label = []
+        for i in old_label:
+            if i == 1: new_label.append([1,0,0])
+            if i == -1:new_label.append([0,1,0])
+            if i == 0: new_label.append( [0,0,1])
+        v['label'] = np.array(new_label)
     v['jet_pt'] = jet_p4.pt
     v['jet_eta'] = jet_p4.eta
     v['jet_phi'] = jet_p4.phi
@@ -113,11 +130,19 @@ def convert(source, destdir, basename, step=None, limit=None):
         v=_transform(df, start=start, stop=start+step)
         awkward.save(output, v, mode='x')
 
-srcDir = '/work/ktauqeer/ParticleNet_multi/tf-keras/preprocessing/original'
-destDir = '/work/ktauqeer/ParticleNet_multi/tf-keras/preprocessing/converted'
+def main():
+    srcDir = '/work/ktauqeer/ParticleNet_multi/tf-keras/preprocessing/' + srcdir
+    destDir = '/work/ktauqeer/ParticleNet_multi/tf-keras/preprocessing/' + outdir
+    if options.do_train:    
+        convert(os.path.join(srcDir, 'WpWnZ_train_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_train_{}'.format(year))
+        convert(os.path.join(srcDir, 'WpWnZ_val_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_val_{}'.format(year))
+        convert(os.path.join(srcDir, 'WpWnZ_test_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_test_{}'.format(year))
+        print ("***Successfully converted training sets***")
+    if options.do_eval and options.sample is not None and options.region is not None:
+        convert(os.path.join(srcDir, '{}_{}_{}_eval.h5'.format(region, sample, year)), destdir=destDir, basename='{}_{}_{}'.format(region, sample, year))
+        print ("***Successfully converted eval sets***")
+    elif (options.sample is None or options.region is None) and options.do_eval:
+        print ("Please enter region and sample of the eval dataset")
 
-convert(os.path.join(srcDir, 'WpWnZ_train.h5'), destdir=destDir, basename='WpWnZ_train')
-convert(os.path.join(srcDir, 'WpWnZ_val.h5'), destdir=destDir, basename='WpWnZ_val')
-convert(os.path.join(srcDir, 'WpWnZ_test.h5'), destdir=destDir, basename='WpWnZ_test')
-
-
+if __name__ == '__main__':
+    main()
