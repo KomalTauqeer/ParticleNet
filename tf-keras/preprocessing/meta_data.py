@@ -19,12 +19,14 @@ inputfilename = { 'TTCR': {
                       "TT": "TTCR_TTToSemiLeptonic.root",
                       "SingleMuon": "TTCR_SingleMuon_combined.root",
                       "SingleElectron": "TTCR_SingleElectron_combined.root",
+                      "SingleLepton": "TTCR_EGamma_combined.root",
                      },
                   'VBSSR': {
                             "ssWW": "VBSSR_ssWW_combined.root",
                             "osWW": "VBSSR_osWW_combined.root",
                             "SingleMuon": "VBSSR_SingleMuon_combined.root",
                             "SingleElectron": "VBSSR_SingleElectron_combined.root",
+                            "SingleLepton": "VBSSR_SingleLepton_combined.root",
                            },
                 }
    

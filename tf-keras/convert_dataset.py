@@ -5,9 +5,20 @@ import awkward
 import uproot_methods
 #from sklearn import preprocessing
 from sklearn.preprocessing import MultiLabelBinarizer
-
+import optparse
 import logging
 logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] %(levelname)s: %(message)s')
+
+parser = optparse.OptionParser()
+parser.add_option("--sample", "--s", dest="sample", default= "TT")
+parser.add_option("--region", "--r", dest="region", default= "TTCR")
+parser.add_option("--year", "--y", dest="year", default= "UL18")
+parser.add_option("--mode", "--m", dest="mode", default= "train", help= 'choose from train, test or eval mode of run')
+(options,args) = parser.parse_args()
+sample = options.sample
+region = options.region
+year = options.year
+mode = options.mode
 
 def _transform(dataframe, start=0, stop=-1, jet_size=0.8):
     from collections import OrderedDict
@@ -39,13 +50,30 @@ def _transform(dataframe, start=0, stop=-1, jet_size=0.8):
 
     # outputs
     #Transformation of labels
-    #For TT: lepcharge = [-1, 1] == [W+, W-] --> [[1,0], [0,1]]
-    old_label = df['lep_charge']
-    print (old_label)
-    new_label = [[1,0] if i == -1 else [0,1] for i in old_label]
-    new_label = np.array(new_label)
-    print (new_label)
-    v['label'] = new_label
+    #For TTCR(MC&Data): lepcharge = [-1, 1] == [W+, W-] --> [[1,0], [0,1]]
+    #For VBSSR and ssWW sample: lepcharge = [1, -1] == [W+, W-] --> [[1,0], [0,1]]
+    #For VBSSR and osWW sample: lepcharge = [-1, 1] == [W+, W-] --> [[1,0], [0,1]]
+    if mode == 'train' or mode == 'test':
+        old_label = df['lep_charge']
+        print (old_label)
+        if region == 'TTCR':
+            new_label = [[1,0] if i == -1 else [0,1] for i in old_label]
+            new_label = np.array(new_label)
+            print (new_label)
+            v['label'] = new_label
+        elif region == 'VBSSR' and sample == 'osWW':
+            new_label = [[1,0] if i == -1 else [0,1] for i in old_label]
+            new_label = np.array(new_label)
+            print (new_label)
+            v['label'] = new_label
+        elif region == 'VBSSR' and sample == 'ssWW':
+            new_label = [[1,0] if i == 1 else [0,1] for i in old_label]
+            new_label = np.array(new_label)
+            print (new_label)
+            v['label'] = new_label
+        else:
+            print ("Invalid region or sample! Cannot assign labels.")
+            sys.exit()
 
     v['jet_pt'] = jet_p4.pt
     v['jet_eta'] = jet_p4.eta
@@ -115,7 +143,9 @@ def convert(source, destdir, basename, step=None, limit=None):
 srcDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/original'
 destDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/converted'
 
-convert(os.path.join(srcDir, 'Train_TT_UL18.h5'), destdir=destDir, basename='Train_TT_UL18')
-convert(os.path.join(srcDir, 'Test_TT_UL18.h5'), destdir=destDir, basename='Test_TT_UL18')
-convert(os.path.join(srcDir, 'Val_TT_UL18.h5'), destdir=destDir, basename='Val_TT_UL18')
-
+if mode == 'train':
+    convert(os.path.join(srcDir, 'Train_TT_UL18.h5'), destdir=destDir, basename='Train_TT_UL18')
+    convert(os.path.join(srcDir, 'Test_TT_UL18.h5'), destdir=destDir, basename='Test_TT_UL18')
+    convert(os.path.join(srcDir, 'Val_TT_UL18.h5'), destdir=destDir, basename='Val_TT_UL18')
+elif mode == 'test':
+    convert(os.path.join(srcDir, 'Test_{}_{}_{}.h5'.format(region,sample,year)), destdir=destDir, basename='Test_{}_{}_{}'.format(region,sample,year))

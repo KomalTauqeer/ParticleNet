@@ -23,15 +23,15 @@ def merge_df(first, second, index_ignore=True):
     df = pd.concat((first, second), ignore_index=index_ignore)
     return df
 
-def prepare_input_dataset(filepath, filename, treename, sample_type, variables, labels):
+def prepare_input_dataset(filepath, filename, treename, region, variables, labels):
     dataset = root2df(filepath+filename, treename, variables)
-    if sample_type == 'TT' or sample_type == 'VBS':
+    if region == 'TTCR' or region == 'VBSSR':
         labels = root2df(filepath+filename, treename, labels)
     dataset = unstack_multi_df(dataset)
-    if sample_type == 'ZJets':
+    if region == 'ZJetsCR':
         dataset['lep_charge'] = np.array(0.)
         plot_dataset['lep_charge'] = np.array(0.) 
-    if sample_type == 'TT' or sample_type == 'VBS': 
+    if region == 'TTCR' or region == 'VBSSR': 
         dataset = dataset.join(labels)
     return dataset
 
