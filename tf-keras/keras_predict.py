@@ -5,16 +5,15 @@ from numpy import savetxt
 import awkward
 import tensorflow as tf
 from tensorflow import keras
-import matplotlib.pyplot as plt
-from sklearn.metrics import confusion_matrix,ConfusionMatrixDisplay
-from sklearn.metrics import roc_curve,RocCurveDisplay,auc
+import matplotlib as plt
 import logging
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s: %(message)s')
 from keras_train import stack_arrays, pad_array, Dataset
+from plot import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--region", "--r", dest="region", default= "VBSSR")
-parser.add_argument("--sample", "--s", dest="sample", default= "osWW")
+parser.add_argument("--region", "--r", dest="region", default="TTCR" )
+parser.add_argument("--sample", "--s", dest="sample", default= "TT")
 parser.add_argument("--year", "--y", dest="year", default="UL18")
 args = parser.parse_args()
 region = args.region
@@ -39,55 +38,6 @@ def eval(eval_file, model_path):
     print (model_output)
     return model_output
 
-def plot_output_score(output_score, truth_labels, ofile):
-    plt.hist(output_score[truth_labels[:,0]==1,0],30,histtype='step',color='red',label='$\mathrm{W^+}$')
-    plt.hist(output_score[truth_labels[:,0]==0,0],30,histtype='step',color='blue',label='$\mathrm{W^-}$')
-    plt.legend(loc='upper right')
-    plt.ylabel('Events')
-    plt.xlabel('Jet charge tagger score')
-    plt.savefig(ofile+'_outputscore.pdf')
-    plt.clf()
-    plt.close()
-
-def plot_confusion_matrix(output_score, truth_labels, ofile):
-    normalized_cm = confusion_matrix(truth_labels.argmax(axis=1),output_score.argmax(axis=1),normalize = 'true')
-    unnormalized_cm = confusion_matrix(truth_labels.argmax(axis=1),output_score.argmax(axis=1))
-    cm = ConfusionMatrixDisplay(normalized_cm, display_labels=['$\mathrm{W^+}$','$\mathrm{W^-}$'])
-    cm.plot()
-    plt.title('Normalized Confusion Matrix')
-    plt.savefig(ofile+'_normalizedCM.pdf')
-    plt.clf()
-    cm1 = ConfusionMatrixDisplay(unnormalized_cm,display_labels=['$\mathrm{W^+}$','$\mathrm{W^-}$'])
-    cm1.plot()
-    plt.title('Confusion Matrix')
-    plt.savefig(ofile+'_unnormalizedCM.pdf')
-    plt.clf()
-    plt.close()
-
-def compute_ROC_curve(output_score, truth_labels, ofile):
-    n_classes = 1
-    
-    # Compute ROC curve and ROC area for each class
-    fpr = dict()
-    tpr = dict()
-    roc_auc = dict()
-    for i in range(n_classes):
-        fpr[i], tpr[i], _ = roc_curve(truth_labels[:, i], output_score[:, i])
-        roc_auc[i] = auc(fpr[i], tpr[i])
-    
-    # Plot of a ROC curve for a specific class
-    for i in range(n_classes):
-        plt.figure()
-        plt.plot(fpr[i], tpr[i], label='ROC curve (area = %0.2f)' % roc_auc[i])
-        plt.plot([0, 1], [0, 1], 'k--')
-        plt.xlim([0.0, 1.0])
-        plt.ylim([0.0, 1.05])
-        plt.xlabel('False Positive Rate')
-        plt.ylabel('True Positive Rate')
-        plt.title('Receiver operating characteristic (ROC)')
-        plt.legend(loc="lower right")
-        plt.savefig(ofile+'_ROC_{}.pdf'.format(i))
-    
 def main():
     outdir = 'eval_results_lrsch_1e-3'
     if not os.path.isdir(outdir):
