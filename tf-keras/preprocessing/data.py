@@ -90,9 +90,16 @@ def prepare_input_multitrain(filepath, filename, treename, sample_type, variable
         dataset = dataset.join(labels)
     return dataset
 
-def prepare_input_eval(filepath, filename, treename, variables):
+#def prepare_input_eval(filepath, filename, treename, variables):
+#    dataset = root2df(filepath+filename, treename, variables)
+#    dataset = unstack_multi_df(dataset)
+#    return dataset
+
+def prepare_input_eval(filepath, filename, treename, variables, labels):
     dataset = root2df(filepath+filename, treename, variables)
     dataset = unstack_multi_df(dataset)
+    labels = root2df(filepath+filename, treename, labels) 
+    dataset = dataset.join(labels)
     return dataset
 
 def merge_df(first, second, index_ignore=True):

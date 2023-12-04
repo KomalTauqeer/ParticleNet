@@ -27,7 +27,7 @@ outdir = options.outdir
 
 if options.do_train:
     filepathTT = meta_data.inputfilepath['TTCR'][year]
-    filenameTT = meta_data.inputfilename['TTCR']['TT']
+    filenameTT = meta_data.inputfilename['TTCR'][sample]
     filepathZJets = meta_data.inputfilepath['ZJetsCR'][year]
     filenameZJets = meta_data.inputfilename['ZJetsCR']['ZJets']
 
@@ -41,7 +41,8 @@ if options.do_eval:
 
 treename = meta_data.treename
 inputvariables = meta_data.variables
-if options.do_train: labels = meta_data.labels
+#if options.do_train: labels = meta_data.labels
+labels = meta_data.labels
 
 def main():
     if options.do_train:
@@ -86,8 +87,9 @@ def main():
         if not os.path.isdir(opath):
             os.makedirs(opath)
         print ("***Converting {} file to pandas dataframe***".format(filepath+filename))
-        df = prepare_input_eval(filepath, filename, treename, inputvariables)
-        print ("Eval dataset: \n" + df)
+        df = prepare_input_eval(filepath, filename, treename, inputvariables, labels)
+        #print ("Eval dataset: \n" + df)
+        print (df)
         save_dataset(df, opath, "{}_{}_{}_eval".format(region, sample, year))
         print ("***Eval file for {} is saved in {}***".format(sample,opath))
 

@@ -3,7 +3,7 @@ import sys
 import datetime
 import optparse
 import numpy as np
-import awkward
+import awkward0
 import tensorflow as tf
 from tensorflow import keras
 from tf_keras_model import get_particle_net, get_particle_net_lite
@@ -68,7 +68,7 @@ class Dataset(object):
     def _load(self):
         logging.info('Start loading file %s' % self.filepath)
         counts = None
-        with awkward.load(self.filepath) as a:
+        with awkward0.load(self.filepath) as a:
             self._label = a[self.label]
             for k in self.feature_dict:
                 arrs = []
@@ -119,8 +119,8 @@ class Dataset(object):
 
 def train_multi():
     #Load training and validation dataset
-    train_dataset = Dataset('preprocessing/converted/multitraining_sets/WpWnZ_train_{}_0.awkd'.format(year), data_format='channel_last')
-    val_dataset = Dataset('preprocessing/converted/multitraining_sets/WpWnZ_val_{}_0.awkd'.format(year), data_format='channel_last')
+    train_dataset = Dataset('preprocessing/converted/multitraining_sets/WpWnZ_genmatched_train_{}_0.awkd'.format(year), data_format='channel_last')
+    val_dataset = Dataset('preprocessing/converted/multitraining_sets/WpWnZ_genmatched_val_{}_0.awkd'.format(year), data_format='channel_last')
     
     model_type = 'particle_net_lite' # choose between 'particle_net' and 'particle_net_lite'
     num_classes = train_dataset.y.shape[1]

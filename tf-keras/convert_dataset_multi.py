@@ -54,17 +54,17 @@ def _transform(dataframe, start=0, stop=-1, jet_size=0.8):
     jet_p4 = p4.sum()
 
     # outputs
-    if options.do_train:
-        old_label = df['lep_charge']
-        print (np.count_nonzero(old_label==0.0))
-        print (np.count_nonzero(old_label==1.0))
-        print (np.count_nonzero(old_label==-1.0))
-        new_label = []
-        for i in old_label:
-            if i == 1: new_label.append([1,0,0])
-            if i == -1:new_label.append([0,1,0])
-            if i == 0: new_label.append( [0,0,1])
-        v['label'] = np.array(new_label)
+    #if options.do_train:
+    old_label = df['lep_charge']
+    print (np.count_nonzero(old_label==0.0))
+    print (np.count_nonzero(old_label==1.0))
+    print (np.count_nonzero(old_label==-1.0))
+    new_label = []
+    for i in old_label:
+        if i == 1: new_label.append([1,0,0])
+        if i == -1:new_label.append([0,1,0])
+        if i == 0: new_label.append( [0,0,1])
+    v['label'] = np.array(new_label)
     v['jet_pt'] = jet_p4.pt
     v['jet_eta'] = jet_p4.eta
     v['jet_phi'] = jet_p4.phi
@@ -134,9 +134,9 @@ def main():
     srcDir = '/work/ktauqeer/ParticleNet_multi/tf-keras/preprocessing/' + srcdir
     destDir = '/work/ktauqeer/ParticleNet_multi/tf-keras/preprocessing/' + outdir
     if options.do_train:    
-        convert(os.path.join(srcDir, 'WpWnZ_train_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_train_{}'.format(year))
-        convert(os.path.join(srcDir, 'WpWnZ_val_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_val_{}'.format(year))
-        convert(os.path.join(srcDir, 'WpWnZ_test_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_test_{}'.format(year))
+        convert(os.path.join(srcDir, 'WpWnZ_train_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_genmatched_train_{}'.format(year))
+        convert(os.path.join(srcDir, 'WpWnZ_val_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_genmatched_val_{}'.format(year))
+        convert(os.path.join(srcDir, 'WpWnZ_test_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_genmatched_test_{}'.format(year))
         print ("***Successfully converted training sets***")
     if options.do_eval and options.sample is not None and options.region is not None:
         convert(os.path.join(srcDir, '{}_{}_{}_eval.h5'.format(region, sample, year)), destdir=destDir, basename='{}_{}_{}'.format(region, sample, year))
