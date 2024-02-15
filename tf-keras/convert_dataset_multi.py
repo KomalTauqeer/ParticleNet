@@ -55,6 +55,18 @@ def _transform(dataframe, start=0, stop=-1, jet_size=0.8):
 
     # outputs
     #if options.do_train:
+    fatjet_subjet1_btag = df['fatjet_subjet1_btag_DeepFlavour_b'].values
+    fatjet_subjet2_btag = df['fatjet_subjet2_btag_DeepFlavour_b'].values
+    filtered_fatjet_subjet1_btag = []
+    filtered_fatjet_subjet2_btag = []
+    for itr in fatjet_subjet1_btag:
+        if itr == -80:  filtered_fatjet_subjet1_btag.append(0.)
+        else: filtered_fatjet_subjet1_btag.append(itr)
+    for itr in fatjet_subjet2_btag:
+        if itr == -80:  filtered_fatjet_subjet2_btag.append(0.)
+        else: filtered_fatjet_subjet2_btag.append(itr)
+    v['fatjet_subjet1_btag'] = np.array(filtered_fatjet_subjet1_btag)
+    v['fatjet_subjet2_btag'] = np.array(filtered_fatjet_subjet2_btag)
     old_label = df['lep_charge']
     print (np.count_nonzero(old_label==0.0))
     print (np.count_nonzero(old_label==1.0))
@@ -139,6 +151,7 @@ def main():
         convert(os.path.join(srcDir, 'WpWnZ_test_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_genmatched_test_{}'.format(year))
         print ("***Successfully converted training sets***")
     if options.do_eval and options.sample is not None and options.region is not None:
+        print ("Converting {}/{}_{}_{}_eval.h5 .................".format(srcDir, region, sample, year))
         convert(os.path.join(srcDir, '{}_{}_{}_eval.h5'.format(region, sample, year)), destdir=destDir, basename='{}_{}_{}'.format(region, sample, year))
         print ("***Successfully converted eval sets***")
     elif (options.sample is None or options.region is None) and options.do_eval:

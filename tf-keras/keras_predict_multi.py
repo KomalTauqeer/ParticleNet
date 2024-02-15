@@ -24,10 +24,13 @@ import rootIO
 parser = optparse.OptionParser()
 parser.add_option("--year", dest="year", default= "UL18")
 parser.add_option("--region", dest="region", default= 'VBSSR')
+parser.add_option("--do_data" , "--do_data", action="store_true", dest = "do_data", help = "predict on data samples", default = False)
 (options,args) = parser.parse_args()
 year = options.year
 region = options.region
+
 samples = ["TT", "ST", "WJet", "ssWW", "osWW", "WZ", "ZZ", "QCDVV"]
+data_samples = ["Data_muon", "Data_electron"]
 
 treename = "AnalysisTree"
 
@@ -43,39 +46,73 @@ inputfilepath = {
 inputfilename = { 
 
                   'VBSSR': {
-                         "TT": "VBSSR_TTToSemiLeptonic_ABC_dnn_sr1.root",
-                         "WJet": "VBSSR_WJetsToLNu_combined_ABC_dnn_sr1.root",
-                         "ST": "VBSSR_ST_combined_ABC_dnn_sr1.root",
-                         "ssWW": "VBSSR_ssWW_combined_ABC_dnn_sr1.root",
-                         "osWW": "VBSSR_osWW_combined_ABC_dnn_sr1.root",
-                         "WZ": "VBSSR_WZ_combined_ABC_dnn_sr1.root",
-                         "ZZ": "VBSSR_ZZ_ABC_dnn_sr1.root",
-                         "QCDVV": "VBSSR_QCDVV_combined_ABC_dnn_sr1.root",
+                         "TT": "VBSSR_TTToSemiLeptonic_ABC_dnn_sr1_0p6.root",
+                         "WJet": "VBSSR_WJetsToLNu_combined_ABC_dnn_sr1_0p6.root",
+                         "ST": "VBSSR_ST_combined_ABC_dnn_sr1_0p6.root",
+                         "ssWW": "VBSSR_ssWW_combined_ABC_dnn_sr1_0p6.root",
+                         "osWW": "VBSSR_osWW_combined_ABC_dnn_sr1_0p6.root",
+                         "WZ": "VBSSR_WZ_combined_ABC_dnn_sr1_0p6.root",
+                         "ZZ": "VBSSR_ZZ_ABC_dnn_sr1_0p6.root",
+                         "QCDVV": "VBSSR_QCDVV_combined_ABC_dnn_sr1_0p6.root",
                          },
+                }
+
+datafilename =  { 'VBSSR': {
+                         "Data_muon": "VBSSR_SingleMuon_combined_dnn_sr1_0p6.root",
+                         "Data_electron": "VBSSR_SingleElectron_combined_dnn_sr1_0p6.root",
+                         }
+                }
+
+datafilename_UL18 =  { 'VBSSR': {
+                         "Data_muon": "VBSSR_SingleMuon_combined_dnn_sr1_0p6.root",
+                         "Data_electron": "VBSSR_EGamma_combined_dnn_sr1_0p6.root",
+                         }
                 }
 
 def main():
 
     #Load model
     model = keras.models.load_model("successful_multitrain_results/Oct23_lrsch_1e-4/PNL_checkpoints_lrsch_1e-4/particle_net_lite_model.029.h5")
-    for sample in samples:
-        eval_dataset = Dataset('preprocessing/converted/eval_sets/{}_{}_{}_0.awkd'.format(region, sample, year), data_format='channel_last')
-        PN_output= (model.predict(eval_dataset.X))
-        print ("Output for {}: ".format(sample))
-        print (PN_output)
-        predicted_class = np.array([np.argmax(PN_output, axis=1)]).T
-        print (predicted_class.flatten())
-        nrows, ncolumns = (np.shape(PN_output))
-        print (np.shape(predicted_class))
-        predicted_probabilites = []
-        for row in range(nrows):
-            predicted_probabilites.append(PN_output[row][predicted_class[row]])
-        print (np.array(predicted_probabilites).flatten())
-        print (np.shape(predicted_probabilites))
-        print ()
-        file_path = inputfilepath[region][year] + inputfilename[region][sample]
-        rootIO.add_branches(file_path, treename, 'jetchargetagger_prob', 'F', np.array(predicted_probabilites).flatten(), 'jetchargetagger_ind', 'F', predicted_class.flatten())
-        print ("Branches added to the root file {}".format(file_path))
+
+    if options.do_data:
+        for sample in data_samples:
+            eval_dataset = Dataset('preprocessing/converted/data_eval_sets/{}_{}_{}_0.awkd'.format(region, sample, year), data_format='channel_last')
+            PN_output= (model.predict(eval_dataset.X))
+            print ("Output for {}: ".format(sample))
+            print (PN_output)
+            predicted_class = np.array([np.argmax(PN_output, axis=1)]).T
+            print (predicted_class.flatten())
+            nrows, ncolumns = (np.shape(PN_output))
+            print (np.shape(predicted_class))
+            predicted_probabilites = []
+            for row in range(nrows):
+                predicted_probabilites.append(PN_output[row][predicted_class[row]])
+            print (np.array(predicted_probabilites).flatten())
+            print (np.shape(predicted_probabilites))
+            print ()
+            if year!= "UL18": file_path = inputfilepath[region][year] + datafilename[region][sample]
+            else: file_path = inputfilepath[region][year] + datafilename_UL18[region][sample]
+            rootIO.add_branches(file_path, treename, 'jetchargetagger_prob', 'F', np.array(predicted_probabilites).flatten(), 'jetchargetagger_ind', 'F', predicted_class.flatten())
+            print ("Branches added to the root file {}".format(file_path))
+    else:
+        for sample in samples:
+            eval_dataset = Dataset('preprocessing/converted/eval_sets/{}_{}_{}_0.awkd'.format(region, sample, year), data_format='channel_last')
+            PN_output= (model.predict(eval_dataset.X))
+            print ("Output for {}: ".format(sample))
+            print (PN_output)
+            predicted_class = np.array([np.argmax(PN_output, axis=1)]).T
+            print (predicted_class.flatten())
+            nrows, ncolumns = (np.shape(PN_output))
+            print (np.shape(predicted_class))
+            predicted_probabilites = []
+            for row in range(nrows):
+                predicted_probabilites.append(PN_output[row][predicted_class[row]])
+            print (np.array(predicted_probabilites).flatten())
+            print (np.shape(predicted_probabilites))
+            print ()
+            file_path = inputfilepath[region][year] + inputfilename[region][sample]
+            rootIO.add_branches(file_path, treename, 'jetchargetagger_prob', 'F', np.array(predicted_probabilites).flatten(), 'jetchargetagger_ind', 'F', predicted_class.flatten())
+            print ("Branches added to the root file {}".format(file_path))
 
 
 if __name__ == '__main__':

@@ -53,6 +53,9 @@ def add_branches(filename, treename, branchname1, branchtype1, data1, branchname
 
     # get number of entries and check if size matches the data
     n_entries = otree.GetEntries()
+    print (n_entries)
+    print (data1.size)
+    print (data2.size)
     if n_entries != data1.size:
         print('mismatch in input tree entries and new branch1 entries!')
     if n_entries != data2.size:

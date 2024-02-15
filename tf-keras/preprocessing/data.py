@@ -90,6 +90,16 @@ def prepare_input_multitrain(filepath, filename, treename, sample_type, variable
         dataset = dataset.join(labels)
     return dataset
 
+def prepare_addinput_multitrain(filepath, filename, treename, sample_type, addvariables):
+    dataset = root2df(filepath+filename, treename, addvariables)
+    #dataset = unstack_multi_df(dataset)
+    #if sample_type == 'ZJets':
+    #    dataset[labels] = np.array(0.)
+    #if sample_type == 'TT': 
+    #    labels = root2df(filepath+filename, treename, labels)
+    #    dataset = dataset.join(labels)
+    return dataset
+
 #def prepare_input_eval(filepath, filename, treename, variables):
 #    dataset = root2df(filepath+filename, treename, variables)
 #    dataset = unstack_multi_df(dataset)

@@ -3,7 +3,7 @@ import sys
 import datetime
 import optparse
 import numpy as np
-import awkward0
+import awkward
 import tensorflow as tf
 from tensorflow import keras
 from tf_keras_model import get_particle_net, get_particle_net_lite
@@ -15,7 +15,7 @@ parser = optparse.OptionParser()
 parser.add_option("--use_gpu" , "--use_gpu", action="store_true", dest = "gpu_train", help = "gpu training", default = True)
 parser.add_option("--gpu_device", type = "int", help = "choose from 0,1,2,3", default= 1)
 parser.add_option("--year", "--y", dest="year", default= "UL18")
-parser.add_option("--outdir", "--odir", dest="outdir", default= "training_history")
+parser.add_option("--outdir", "--outdir", dest="outdir", default= "")
 (options,args) = parser.parse_args()
 gpu_training = options.gpu_train
 gpu_device = options.gpu_device
@@ -56,6 +56,7 @@ class Dataset(object):
         if len(feature_dict)==0:
             feature_dict['points'] = ['part_etarel', 'part_phirel']
             feature_dict['features'] = ['part_pt_log', 'part_e_log', 'part_etarel', 'part_phirel', 'part_charge', 'part_deltaR']
+            feature_dict['add_features'] = ['fatjet_subjet1_btag', 'fatjet_subjet2_btag']
             feature_dict['mask'] = ['part_pt_log']
         self.label = label
         self.pad_len = pad_len
@@ -68,7 +69,7 @@ class Dataset(object):
     def _load(self):
         logging.info('Start loading file %s' % self.filepath)
         counts = None
-        with awkward0.load(self.filepath) as a:
+        with awkward.load(self.filepath) as a:
             self._label = a[self.label]
             for k in self.feature_dict:
                 arrs = []
@@ -87,7 +88,8 @@ class Dataset(object):
                     for col in column:
                         arrs.append(a[col])
                 self._values[k] = np.stack(arrs, axis=self.stack_axis)
-            #print(self._values['features'])
+            print(self._values['features'])
+            print(self._values['add_features'])
                     
         logging.info('Finished loading file %s' % self.filepath)
 
@@ -119,8 +121,10 @@ class Dataset(object):
 
 def train_multi():
     #Load training and validation dataset
-    train_dataset = Dataset('preprocessing/converted/multitraining_sets/WpWnZ_genmatched_train_{}_0.awkd'.format(year), data_format='channel_last')
-    val_dataset = Dataset('preprocessing/converted/multitraining_sets/WpWnZ_genmatched_val_{}_0.awkd'.format(year), data_format='channel_last')
+    #train_dataset = Dataset('preprocessing/converted/multitraining_sets/WpWnZ_genmatched_train_{}_0.awkd'.format(year), data_format='channel_last')
+    #val_dataset = Dataset('preprocessing/converted/multitraining_sets/WpWnZ_genmatched_val_{}_0.awkd'.format(year), data_format='channel_last')
+    train_dataset = Dataset('preprocessing/converted/btagVars/WpWnZ_genmatched_train_{}_0.awkd'.format(year), data_format='channel_last')
+    val_dataset = Dataset('preprocessing/converted/btagVars/WpWnZ_genmatched_val_{}_0.awkd'.format(year), data_format='channel_last')
     
     model_type = 'particle_net_lite' # choose between 'particle_net' and 'particle_net_lite'
     num_classes = train_dataset.y.shape[1]
@@ -170,7 +174,7 @@ def train_multi():
     lr_scheduler = keras.callbacks.LearningRateScheduler(lr_schedule)
     progress_bar = keras.callbacks.ProgbarLogger()
     earlystopping = keras.callbacks.EarlyStopping(verbose=True, patience=10, monitor='val_loss')
-    log_dir = "training_results/logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    log_dir = outdir + "/logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
     
     callbacks = [checkpoint, lr_scheduler, progress_bar, earlystopping, tensorboard_callback]
