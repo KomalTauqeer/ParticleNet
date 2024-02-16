@@ -1,19 +1,22 @@
 import os
+import optparse
 import pandas as pd
 import numpy as np
 import awkward
 import uproot_methods
 #from sklearn import preprocessing
 from sklearn.preprocessing import MultiLabelBinarizer
-import optparse
 import logging
 logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] %(levelname)s: %(message)s')
 
 parser = optparse.OptionParser()
-parser.add_option("--sample", "--s", dest="sample", default= "TT")
-parser.add_option("--region", "--r", dest="region", default= "TTCR")
+parser.add_option("--mode" , "--mode", dest = "mode", help = "binary/ternary", default = "binary")
+parser.add_option("--train" , "--train", action="store_true", dest = "do_train", help = "train mode", default = False)
+parser.add_option("--eval" , "--eval", action="store_true", dest = "do_eval", help = "eval mode, no labels will be added", default = False)
+parser.add_option("--test" , "--test", action="store_true", dest = "do_test", help = "test mode, labels will be added", default = False)
 parser.add_option("--year", "--y", dest="year", default= "UL18")
-parser.add_option("--mode", "--m", dest="mode", default= "train", help= 'choose from train, test or eval mode of run')
+parser.add_option("--region", "--r", dest="region", default= None)
+parser.add_option("--sample", "--s", dest="sample", default= None)
 (options,args) = parser.parse_args()
 sample = options.sample
 region = options.region
@@ -53,7 +56,30 @@ def _transform(dataframe, start=0, stop=-1, jet_size=0.8):
     #For TTCR(MC&Data): lepcharge = [-1, 1] == [W+, W-] --> [[1,0], [0,1]]
     #For VBSSR and ssWW sample: lepcharge = [1, -1] == [W+, W-] --> [[1,0], [0,1]]
     #For VBSSR and osWW sample: lepcharge = [-1, 1] == [W+, W-] --> [[1,0], [0,1]]
-    if mode == 'train' or mode == 'test':
+    if options.do_train:
+        if mode == "binary":
+            old_label = df['lep_charge']
+            print (old_label)
+            new_label = [[1,0] if i == -1 else [0,1] for i in old_label]
+            new_label = np.array(new_label)
+            print (new_label)
+            v['label'] = new_label
+        elif mode == "ternary":
+            old_label = df['lep_charge']
+            print (np.count_nonzero(old_label==0.0))
+            print (np.count_nonzero(old_label==1.0))
+            print (np.count_nonzero(old_label==-1.0))
+            new_label = []
+            for i in old_label:
+                if i == -1: new_label.append([1,0,0])
+                if i == 1:new_label.append([0,1,0])
+                if i == 0: new_label.append( [0,0,1])
+            v['label'] = np.array(new_label)
+        else:
+            print ("You have selected train/test option however mode (binary/ternary) is not specified which is required to assign the labels")
+            sys.exit()
+
+    if options.do_test:
         old_label = df['lep_charge']
         print (old_label)
         if region == 'TTCR':
@@ -72,9 +98,10 @@ def _transform(dataframe, start=0, stop=-1, jet_size=0.8):
             print (new_label)
             v['label'] = new_label
         else:
-            print ("Invalid region or sample! Cannot assign labels.")
+            print ("Invalid region or sample! Cannot assign labels. For converting test dataset, region and sample information is required for labels")
             sys.exit()
 
+    v['event_weight'] = df['event_weight'].values
     v['jet_pt'] = jet_p4.pt
     v['jet_eta'] = jet_p4.eta
     v['jet_phi'] = jet_p4.phi
@@ -140,12 +167,43 @@ def convert(source, destdir, basename, step=None, limit=None):
         v=_transform(df, start=start, stop=start+step)
         awkward.save(output, v, mode='x')
 
-srcDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/original'
-destDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/converted'
 
-if mode == 'train':
-    convert(os.path.join(srcDir, 'Train_TT_UL18.h5'), destdir=destDir, basename='Train_TT_UL18')
-    convert(os.path.join(srcDir, 'Test_TT_UL18.h5'), destdir=destDir, basename='Test_TT_UL18')
-    convert(os.path.join(srcDir, 'Val_TT_UL18.h5'), destdir=destDir, basename='Val_TT_UL18')
-elif mode == 'test':
-    convert(os.path.join(srcDir, 'Test_{}_{}_{}.h5'.format(region,sample,year)), destdir=destDir, basename='Test_{}_{}_{}'.format(region,sample,year))
+def main():
+    if options.do_train:
+        if mode == "binary":
+            srcDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/original/binary_training/{}'.format(year) 
+            destDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/converted/binary_training/{}'.format(year) 
+            convert(os.path.join(srcDir, 'WpWn_train_{}.h5'.format(year)), destdir=destDir, basename='WpWn_train_{}'.format(year))
+            convert(os.path.join(srcDir, 'WpWn_val_{}.h5'.format(year)), destdir=destDir, basename='WpWn_val_{}'.format(year))
+            convert(os.path.join(srcDir, 'WpWn_test_{}.h5'.format(year)), destdir=destDir, basename='WpWn_test_{}'.format(year))
+            print ("***Successfully converted training sets for binary classification***")
+        elif mode == "ternary":
+            srcDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/original/ternary_training/{}'.format(year) 
+            destDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/converted/ternary_training/{}'.format(year) 
+            convert(os.path.join(srcDir, 'WpWnZ_train_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_train_{}'.format(year))
+            convert(os.path.join(srcDir, 'WpWnZ_val_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_val_{}'.format(year))
+            convert(os.path.join(srcDir, 'WpWnZ_test_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_test_{}'.format(year))
+            print ("***Successfully converted training sets for ternary classification***")
+    elif options.do_test:
+        srcDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/original/test/{}'.format(year) 
+        destDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/converted/test/{}'.format(year)
+        if options.sample is not None and options.region is not None:
+            print ("Converting {}/Test_{}_{}_{}.h5 .................".format(srcDir, region, sample, year))
+            convert(os.path.join(srcDir, 'Test_{}_{}_{}.h5'.format(region, sample, year)), destdir=destDir, basename='Test_{}_{}_{}'.format(region, sample, year))
+            print ("***Successfully converted test sets***")
+        elif options.sample is None or options.region is None:
+            print ("Please enter region and sample of the test dataset")
+    elif options.do_eval:
+        srcDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/original/eval/{}'.format(year) 
+        destDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/converted/eval/{}'.format(year)
+        if options.sample is not None and options.region is not None:
+            print ("Converting {}/Eval_{}_{}_{}.h5 .................".format(srcDir, region, sample, year))
+            convert(os.path.join(srcDir, 'Eval_{}_{}_{}.h5'.format(region, sample, year)), destdir=destDir, basename='Eval_{}_{}_{}'.format(region, sample, year))
+            print ("***Successfully converted eval sets***")
+        elif options.sample is None or options.region is None:
+            print ("Please enter region and sample of the eval dataset")
+    else:
+        print ("Please give any option --train (--binary or --ternary), --test or --eval (with --sample and --region)")
+if __name__ == '__main__':
+    main()
+
