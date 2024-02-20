@@ -1,19 +1,46 @@
 # ParticleNet
 
-Implementation of the jet classification network in [ParticleNet: Jet Tagging via Particle Clouds](https://arxiv.org/abs/1902.08570).
+Implementation of the jet charge tagger network using [ParticleNet: Jet Tagging via Particle Clouds](https://arxiv.org/abs/1902.08570) tensorflow implementation.
 
 ------
+## Setting up enviroment (Only for once!)
+Make sure to have miniconda3 installed and conda enviroment variables are set before you do the next steps.
 
-**MXNet implemetation**
- - [model](mxnet/particle_net.py)
+For this setup, we specifically use python 3.6.8, to use the ROOT version 6.24.08 which is built for this python version and is available on etp machines.
 
+1. Create a new environment with python
+```conda create --name=tf_py36 -c conda-forge python==3.6.8```
 
-**[New] Keras/TensorFlow implemetation** 
- - [model](tf-keras/tf_keras_model.py)
- - Requires tensorflow>=2.0.0 or >=1.15rc2. 
- - A full training example is available in [tf-keras/keras_train.ipynb](tf-keras/keras_train.ipynb). 
-    - The top tagging dataset can be obtained from [https://zenodo.org/record/2603256](https://zenodo.org/record/2603256) and converted with this [script](tf-keras/convert_dataset.ipynb). 
+2. Install tensorflow-gpu using pip
+```pip install tensorflow-gpu==2.1.0```
 
+3. Install CUDA and cuDNN compatible with tf
+```conda install -c conda-forge cudatoolkit=10.1 cudnn=7.6.5```
+
+4. Force-reinstallation of h5py to make tf, keras, python and h5py versions compatible
+```pip install h5py==2.10.0 --force-reinstall```
+
+5. Install other packages
+```pip install uproot4 awkward pandas matplotlib scikit-learn table uproot-methods tqdm nvidia-cublas-cu11 nvidia-cudnn-cu11```
+
+6. Enviroment variables for cuDNN
+```
+mkdir -p $CONDA\_PREFIX/etc/conda/activate.d
+echo 'CUDNN\_PATH=$(dirname $(python -c "import nvidia.cudnn;print(nvidia.cudnn.__file__)"))' >> $CONDA\_PREFIX/etc/conda/activate.d/env\_vars.sh
+echo 'export LD\_LIBRARY\_PATH=$LD\_LIBRARY\_PATH:$CONDA\_PREFIX/lib/:$CUDNN\_PATH/lib' >> $CONDA\_PREFIX/etc/conda/activate.d/env\_vars.sh
+source $CONDA\_PREFIX/etc/conda/activate.d/env\_vars.sh
+```
+
+7. Include following lines in ~/.bashrc to use cuda.
+```
+cuda\_init() {
+
+    MYCUDAVERSION="cuda"
+    export PATH="/usr/local/$MYCUDAVERSION/bin":$PATH
+    export LD_LIBRARY_PATH="$CUDA_PATH/lib64:$CUDA_PATH/lib":${LD_LIBRARAY_PATH}
+}
+
+```
 ## How to use the model
 
 #### MXNet model
