@@ -60,6 +60,6 @@ def compute_ROC_curve(output_score, truth_labels, ofile):
         plt.title('Receiver operating characteristic (ROC)')
         plt.legend(loc="lower right" , fontsize = 'medium')
         plt.savefig(ofile+'_ROC_{}.pdf'.format(i))
-    savetxt('TPR_WpWn_UL18.csv', tpr[0], delimiter=',')
-    savetxt('FPR_WpWn_UL18.csv', fpr[0], delimiter=',')
+    #savetxt('TPR_WpWn_UL18.csv', tpr[0], delimiter=',')
+    #savetxt('FPR_WpWn_UL18.csv', fpr[0], delimiter=',')
 

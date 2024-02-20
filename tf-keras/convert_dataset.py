@@ -180,9 +180,9 @@ def main():
         elif mode == "ternary":
             srcDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/original/ternary_training/{}'.format(year) 
             destDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/converted/ternary_training/{}'.format(year) 
-            convert(os.path.join(srcDir, 'WpWnZ_train_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_train_{}'.format(year))
-            convert(os.path.join(srcDir, 'WpWnZ_val_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_val_{}'.format(year))
-            convert(os.path.join(srcDir, 'WpWnZ_test_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_test_{}'.format(year))
+            convert(os.path.join(srcDir, 'WpWnZ_train_nobtag_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_train_nobtag_{}'.format(year))
+            convert(os.path.join(srcDir, 'WpWnZ_val_nobtag_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_val_nobtag_{}'.format(year))
+            convert(os.path.join(srcDir, 'WpWnZ_test_nobtag_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_test_nobtag_{}'.format(year))
             print ("***Successfully converted training sets for ternary classification***")
     elif options.do_test:
         srcDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/original/test/{}'.format(year) 

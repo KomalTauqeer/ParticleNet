@@ -24,11 +24,15 @@ inputfilepath = {  'TTCR': {
 
 inputfilename = { 'TTCR': {
                       "TT": "TTCR_TTToSemiLeptonic.root",
+                      "TTbtag": "TTCR_TTToSemiLeptonic_btagged_region.root",
+                      "TTnobtag": "TTCR_TTToSemiLeptonic_nonbtagged_region.root",
                      },
                   'ZJetsCR': {
                           #"ZJets": "ZJetsCR_ZJets_UL18_genmatchedZ_0To645000.root",
                           #"ZJets": "ZJetsCR_ZJets_UL18_newgenmatchedZ_fixedbug_180124_mod2_645500.root",
                           "ZJets": "ZJetsCR_ZJets_HTcombined_mod2.root",
+                          "ZJetsbtag": "ZJetsCR_ZJets_HTcombined_mod2_btagged_region.root",
+                          "ZJetsnobtag": "ZJetsCR_ZJets_HTcombined_mod2_nonbtagged_region.root",
                           },
                   'VBSSR': {
                             "ssWW": "VBSSR_ssWW_combined.root",

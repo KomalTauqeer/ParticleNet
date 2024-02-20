@@ -9,10 +9,10 @@ import data_utils
 from data_utils import *
 
 parser = optparse.OptionParser()
-parser.add_option("--mode" , "--mode", dest = "mode", help = "binary/ternary", default = "binary")
+parser.add_option("--mode" , "--mode", dest = "mode", help = "binary/ternary training", default = None)
 parser.add_option("--train" , "--train", action="store_true", dest = "do_train", help = "train mode", default = False)
-parser.add_option("--eval" , "--eval", action="store_true", dest = "do_eval", help = "eval mode, can be applied on samples with no labels", default = False)
-parser.add_option("--test" , "--test", action="store_true", dest = "do_test", help = "test mode, labelled data is required", default = False)
+parser.add_option("--eval" , "--eval", action="store_true", dest = "do_eval", help = "eval mode, can be applied on samples with no labels. This flag is independent of mode", default = False)
+parser.add_option("--test" , "--test", action="store_true", dest = "do_test", help = "test mode, labelled data is required. This flag is only available in binary classification mode. Currently, used to test VBS samples with binary classification", default = False)
 parser.add_option("--year", "--y", dest="year", help = "UL16preVFP, UL16postVFP, UL17, UL18", default= "UL18")
 parser.add_option("--region", "--r", dest="region", help = "TTCR, VBSSR, ZJetsCR", default= None)
 parser.add_option("--sample", "--s", dest="sample", help = "Name of the sample, see meta_data.py", default= None)
@@ -30,9 +30,9 @@ if options.do_train and mode == "binary":
     filenameTT = meta_data.inputfilename['TTCR']['TT']
 elif options.do_train and mode == "ternary":
     filepathTT = meta_data.inputfilepath['TTCR'][year]
-    filenameTT = meta_data.inputfilename['TTCR']['TT']
+    filenameTT = meta_data.inputfilename['TTCR']['TTnobtag']
     filepathZJets = meta_data.inputfilepath['ZJetsCR'][year]
-    filenameZJets = meta_data.inputfilename['ZJetsCR']['ZJets']
+    filenameZJets = meta_data.inputfilename['ZJetsCR']['ZJetsnobtag']
 
 if options.do_eval or options.do_test:
     if region is not None and sample is not None:
@@ -85,12 +85,12 @@ elif mode == "ternary" and options.do_train:
     opath = outdir + '/ternary_training/{}'.format(year) + '/'
     if not os.path.isdir(opath):
         os.makedirs(opath)
-    save_dataset(df_train, opath, "WpWnZ_train_{}".format(year))
-    save_dataset(df_val, opath, "WpWnZ_val_{}".format(year))
-    save_dataset(df_test, opath, "WpWnZ_test_{}".format(year))
+    save_dataset(df_train, opath, "WpWnZ_train_nobtag_{}".format(year))
+    save_dataset(df_val, opath, "WpWnZ_val_nobtag_{}".format(year))
+    save_dataset(df_test, opath, "WpWnZ_test_nobtag_{}".format(year))
     print ("***Multi-training input files for \"{}\" are saved in \"{}\" dir in hdf5 format***".format(year,opath))
 
-elif options.do_test:
+elif mode == "binary" and options.do_test:
     print ("***Converting {} file to pandas dataframe***".format(filepath+filename))
     test_dataset = prepare_input_test(filepath, filename, treename, inputvariables, labels, weights) 
     test_dataset = shuffle(test_dataset, random_state=42)
