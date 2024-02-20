@@ -25,15 +25,15 @@ For this setup, we specifically use python 3.6.8, to use the ROOT version 6.24.0
 
 6. Enviroment variables for cuDNN
 ```
-mkdir -p $CONDA\_PREFIX/etc/conda/activate.d
-echo 'CUDNN\_PATH=$(dirname $(python -c "import nvidia.cudnn;print(nvidia.cudnn.__file__)"))' >> $CONDA\_PREFIX/etc/conda/activate.d/env\_vars.sh
-echo 'export LD\_LIBRARY\_PATH=$LD\_LIBRARY\_PATH:$CONDA\_PREFIX/lib/:$CUDNN\_PATH/lib' >> $CONDA\_PREFIX/etc/conda/activate.d/env\_vars.sh
-source $CONDA\_PREFIX/etc/conda/activate.d/env\_vars.sh
+mkdir -p $CONDA_PREFIX/etc/conda/activate.d
+echo 'CUDNN_PATH=$(dirname $(python -c "import nvidia.cudnn;print(nvidia.cudnn.__file__)"))' >> $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
+echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/:$CUDNN_PATH/lib' >> $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
+source $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
 ```
 
 7. Include following lines in ~/.bashrc to use cuda.
 ```
-cuda\_init() {
+cuda_init() {
 
     MYCUDAVERSION="cuda"
     export PATH="/usr/local/$MYCUDAVERSION/bin":$PATH
