@@ -17,6 +17,10 @@ For this setup, we specifically use python 3.6.8, to use the ROOT version 6.24.0
 3. Install CUDA and cuDNN compatible with tf
 ```conda install -c conda-forge cudatoolkit=10.1 cudnn=7.6.5```
 
+** Verify the tensorflow-gpu installation **
+```python3 -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))"```
+It must give you some list of available GPUs
+
 4. Force-reinstallation of h5py to make tf, keras, python and h5py versions compatible
 ```pip install h5py==2.10.0 --force-reinstall```
 
