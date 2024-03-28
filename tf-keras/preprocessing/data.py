@@ -100,11 +100,6 @@ def prepare_addinput_multitrain(filepath, filename, treename, sample_type, addva
     #    dataset = dataset.join(labels)
     return dataset
 
-#def prepare_input_eval(filepath, filename, treename, variables):
-#    dataset = root2df(filepath+filename, treename, variables)
-#    dataset = unstack_multi_df(dataset)
-#    return dataset
-
 def prepare_input_eval(filepath, filename, treename, variables, labels):
     dataset = root2df(filepath+filename, treename, variables)
     dataset = unstack_multi_df(dataset)

@@ -1,5 +1,4 @@
 variables = ["PF_Px", "PF_Py", "PF_Pz", "PF_E", "PF_q"]
-addVariables = ["fatjet_subjet1_btag_DeepFlavour_b", "fatjet_subjet2_btag_DeepFlavour_b"]
 
 labels = ['lep_charge']
 treename = "AnalysisTree"
@@ -38,14 +37,14 @@ inputfilename = { 'TTCR': {
                            },
 
                   'VBSSR': {
-                         "TT": "VBSSR_TTToSemiLeptonic_ABC_dnn_sr1_0p6.root",
-                         "WJet": "VBSSR_WJetsToLNu_combined_ABC_dnn_sr1_0p6.root",
-                         "ST": "VBSSR_ST_combined_ABC_dnn_sr1_0p6.root",
-                         "ssWW": "VBSSR_ssWW_combined_ABC_dnn_sr1_0p6.root",
-                         "osWW": "VBSSR_osWW_combined_ABC_dnn_sr1_0p6.root",
-                         "WZ": "VBSSR_WZ_combined_ABC_dnn_sr1_0p6.root",
-                         "ZZ": "VBSSR_ZZ_ABC_dnn_sr1_0p6.root",
-                         "QCDVV": "VBSSR_QCDVV_combined_ABC_dnn_sr1_0p6.root",
+                         "TT": "VBSSR_TTToSemiLeptonic_16032024_ABC_dnn_sr1_0p6.root",
+                         "WJet": "VBSSR_WJetsToLNu_combined_16032024_ABC_dnn_sr1_0p6.root",
+                         "ST": "VBSSR_ST_combined_16032024_ABC_dnn_sr1_0p6.root",
+                         "ssWW": "VBSSR_ssWW_combined_16032024_ABC_dnn_sr1_0p6.root",
+                         "osWW": "VBSSR_osWW_combined_16032024_ABC_dnn_sr1_0p6.root",
+                         "WZ": "VBSSR_WZ_combined_16032024_ABC_dnn_sr1_0p6.root",
+                         "ZZ": "VBSSR_ZZ_16032024_ABC_dnn_sr1_0p6.root",
+                         "QCDVV": "VBSSR_QCDVV_combined_16032024_ABC_dnn_sr1_0p6.root",
                          },
                 }
 
@@ -56,7 +55,22 @@ datafilename =  { 'VBSSR': {
                 }
 
 datafilename_UL18 =  { 'VBSSR': {
-                         "Data_muon": "VBSSR_SingleMuon_combined_dnn_sr1_0p6.root",
-                         "Data_electron": "VBSSR_EGamma_combined_dnn_sr1_0p6.root",
+                         "Data_muon": "VBSSR_SingleMuon_combined_16032024_dnn_sr1_0p6.root",
+                         "Data_electron": "VBSSR_EGamma_combined_16032024_dnn_sr1_0p6.root",
                          }
                 }
+
+
+inputfilename_sys = {
+                       'VBSSR': {
+                         "TT": "VBSSR_TTToSemiLeptonic_dnn_sr1_0p6.root",
+                         "WJet": "VBSSR_WJetsToLNu_combined_dnn_sr1_0p6.root",
+                         "ST": "VBSSR_ST_combined_dnn_sr1_0p6.root",
+                         "ssWW": "VBSSR_ssWW_combined_dnn_sr1_0p6.root",
+                         "osWW": "VBSSR_osWW_combined_dnn_sr1_0p6.root",
+                         "WZ": "VBSSR_WZ_combined_dnn_sr1_0p6.root",
+                         "ZZ": "VBSSR_ZZ_dnn_sr1_0p6.root",
+                         "QCDVV": "VBSSR_QCDVV_combined_dnn_sr1_0p6.root",
+
+                        },
+                   }

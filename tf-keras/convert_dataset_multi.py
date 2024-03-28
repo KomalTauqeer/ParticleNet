@@ -12,17 +12,13 @@ logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] %(levelname)s: %(
 parser = optparse.OptionParser()
 parser.add_option("--train" , "--train", action="store_true", dest = "do_train", help = "train mode", default = False)
 parser.add_option("--eval" , "--eval", action="store_true", dest = "do_eval", help = "eval mode", default = False)
+parser.add_option("--eval_sys" , "--eval_sys", action="store_true", dest = "do_eval_sys", help = "eval mode", default = False)
 parser.add_option("--year", "--y", dest="year", default= "UL18")
 parser.add_option("--region", "--r", dest="region", default= None)
 parser.add_option("--sample", "--s", dest="sample", default= None)
 parser.add_option("--outdir", "--odir", dest="outdir", default= "converted")
 parser.add_option("--srcdir", "--sdir", dest="srcdir", default= "original")
 (options,args) = parser.parse_args()
-year = options.year
-region = options.region
-sample = options.sample
-outdir = options.outdir
-srcdir = options.srcdir
 
 
 def _transform(dataframe, start=0, stop=-1, jet_size=0.8):
@@ -54,19 +50,7 @@ def _transform(dataframe, start=0, stop=-1, jet_size=0.8):
     jet_p4 = p4.sum()
 
     # outputs
-    #if options.do_train:
-    fatjet_subjet1_btag = df['fatjet_subjet1_btag_DeepFlavour_b'].values
-    fatjet_subjet2_btag = df['fatjet_subjet2_btag_DeepFlavour_b'].values
-    filtered_fatjet_subjet1_btag = []
-    filtered_fatjet_subjet2_btag = []
-    for itr in fatjet_subjet1_btag:
-        if itr == -80:  filtered_fatjet_subjet1_btag.append(0.)
-        else: filtered_fatjet_subjet1_btag.append(itr)
-    for itr in fatjet_subjet2_btag:
-        if itr == -80:  filtered_fatjet_subjet2_btag.append(0.)
-        else: filtered_fatjet_subjet2_btag.append(itr)
-    v['fatjet_subjet1_btag'] = np.array(filtered_fatjet_subjet1_btag)
-    v['fatjet_subjet2_btag'] = np.array(filtered_fatjet_subjet2_btag)
+    #labels are read in all cases but should only be used for training and evaluation on TT and Z+Jets or ssWW or osWW samples. In all other cases they are meaning less.
     old_label = df['lep_charge']
     print (np.count_nonzero(old_label==0.0))
     print (np.count_nonzero(old_label==1.0))
@@ -143,6 +127,11 @@ def convert(source, destdir, basename, step=None, limit=None):
         awkward.save(output, v, mode='x')
 
 def main():
+    year = options.year
+    region = options.region
+    sample = options.sample
+    outdir = options.outdir
+    srcdir = options.srcdir
     srcDir = '/work/ktauqeer/ParticleNet_multi/tf-keras/preprocessing/' + srcdir
     destDir = '/work/ktauqeer/ParticleNet_multi/tf-keras/preprocessing/' + outdir
     if options.do_train:    
@@ -156,6 +145,16 @@ def main():
         print ("***Successfully converted eval sets***")
     elif (options.sample is None or options.region is None) and options.do_eval:
         print ("Please enter region and sample of the eval dataset")
+    if options.do_eval_sys:
+        srcDir = srcDir+'/sys'
+        destDir = destDir+'/sys'
+        for sample in ["TT", "WJet", "ST", "QCDVV", "ssWW", "osWW", "WZ", "ZZ"]:
+            for systype in ["jec", "jer"]:
+                for sysdir in ["up", "down"]:
+                    print ("Converting {}/{}_{}_{}_{}_{}_eval.h5 .................".format(srcDir, region, sample, year, systype, sysdir))
+                    convert(os.path.join(srcDir, '{}/{}_{}_{}_{}_{}_eval.h5'.format(srcDir, region, sample, year, systype, sysdir)), destdir=destDir, basename='{}_{}_{}_{}_{}'.format(region, sample, year, systype, sysdir))
+                    print ("***Successfully converted sys files {}***".format(sample+ systype+ sysdir))
+        
 
 if __name__ == '__main__':
     main()
