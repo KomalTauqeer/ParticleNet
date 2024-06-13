@@ -26,8 +26,9 @@ def add_branch(filename, treename, branchname, branchtype, data):
     ifile = TFile(filename,'READ')
     itree = ifile.Get(treename)
 
+    ofilename = filename.rstrip('.root') + '_jetchargetagger_WpWn.root'
     # create output file
-    ofile = TFile(filename+'_dnn.root','RECREATE')
+    ofile = TFile(ofilename,'RECREATE')
 
     # clone tree, FIX: hardcoded
     #ofile.mkdir('utm')

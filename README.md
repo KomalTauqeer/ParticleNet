@@ -6,7 +6,7 @@ Implementation of the jet charge tagger network using [ParticleNet: Jet Tagging 
 ## Setting up enviroment (Only for once!)
 Make sure to have miniconda3 installed and conda enviroment variables are set before you do the next steps.
 
-For this setup, we specifically use python 3.6.8, to use the ROOT version 6.24.08 which is built for this python version and is available on etp machines.
+For this setup, we specifically use python 3.6.8, to use the ROOT version 6.28.04 which is built for this python version and is available on etp machines.
 
 1. Create a new environment with python
 ```conda create --name=tf_py36 -c conda-forge python==3.6.8```
@@ -42,6 +42,10 @@ cuda_init() {
     MYCUDAVERSION="cuda"
     export PATH="/usr/local/$MYCUDAVERSION/bin":$PATH
     export LD_LIBRARY_PATH="$CUDA_PATH/lib64:$CUDA_PATH/lib":${LD_LIBRARAY_PATH}
+}
+
+get_root() {
+    source /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.24.08/x86_64-centos7-gcc48-opt/bin/thisroot.sh
 }
 
 ```

@@ -101,6 +101,8 @@ def _particle_net_base(points, features=None, mask=None, setting=None, name='par
             fts = tf.multiply(fts, mask)
 
         pool = tf.reduce_mean(fts, axis=1)  # (N, C)
+        print (type(pool))
+        print (tf.shape(pool))
 
         if setting.fc_params is not None:
             x = pool
@@ -110,6 +112,7 @@ def _particle_net_base(points, features=None, mask=None, setting=None, name='par
                 if drop_rate is not None and drop_rate > 0:
                     x = keras.layers.Dropout(drop_rate)(x)
             out = keras.layers.Dense(setting.num_class, activation='softmax')(x)
+            print (tf.shape(out))
             return out  # (N, num_classes)
         else:
             return pool
@@ -180,3 +183,4 @@ def get_particle_net_lite(num_classes, input_shapes):
     outputs = _particle_net_base(points, features, mask, setting, name='ParticleNet')
 
     return keras.Model(inputs=[points, features, mask], outputs=outputs, name='ParticleNet')
+

@@ -231,7 +231,7 @@ def main():
 
     if options.do_test:
         #eval_dataset = Dataset('preprocessing/converted/multitraining_sets/WpWnZ_genmatched_test_{}_0.awkd'.format(year), data_format='channel_last')
-        eval_dataset = Dataset('preprocessing/converted/ternary_training/{y}/WpWnZ_test_nobtag_{y}_0.awkd'.format(y=year), data_format='channel_last')
+        eval_dataset = Dataset('preprocessing/converted/ternary_training/{y}/WpWnZ_test_btag_{y}_0.awkd'.format(y=year), data_format='channel_last')
     if options.do_eval and options.sample is not None and options.region is not None:
         eval_dataset = Dataset('preprocessing/converted/eval_sets/{}_{}_{}_0.awkd'.format(region, sample, year), data_format='channel_last')
     elif options.do_eval and (options.sample is None or options.region is None):

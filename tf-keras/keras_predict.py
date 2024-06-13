@@ -21,12 +21,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--region", "--r", dest="region", default="TTCR" )
 parser.add_argument("--sample", "--s", dest="sample", default= "TT")
 parser.add_argument("--year", "--y", dest="year", default="UL18")
-parser.add_argument("--model", "--model", dest="model", default=None)
+#parser.add_argument("--model", "--model", dest="model", default=None)
 args = parser.parse_args()
 region = args.region
 sample = args.sample
 year = args.year
-modelpath = args.model
+#modelpath = args.model
 
 def eval(eval_file, model_path):
     eval_dataset = Dataset(eval_file, data_format='channel_last', load_evalset=True)
@@ -43,7 +43,8 @@ def main():
  
     model = 'past_trainings/training_results_Oct23_lrsch_1e-3/model_checkpoints/particle_net_lite_model.025.h5'
     
-    file_to_eval = 'preprocessing/converted/eval/{}/Eval_{}_{}_{}_0.awkd'.format(year,region,sample, year)
+    #file_to_eval = 'preprocessing/converted/eval/{}/Eval_{}_{}_{}_0.awkd'.format(year,region,sample, year)
+    file_to_eval = 'preprocessing/converted/test/{}/Test_{}_{}_{}_0.awkd'.format(year,region,sample, year)
 
     predicted_scores, evt_weights = eval(file_to_eval, model)
     print(predicted_scores[:,0])

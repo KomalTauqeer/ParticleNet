@@ -4,7 +4,7 @@ import sys
 import optparse
 
 #local imports
-import meta_data
+import meta_data_new as meta_data
 import data_utils
 from data_utils import *
 
@@ -17,6 +17,9 @@ parser.add_option("--year", "--y", dest="year", help = "UL16preVFP, UL16postVFP,
 parser.add_option("--region", "--r", dest="region", help = "TTCR, VBSSR, ZJetsCR", default= None)
 parser.add_option("--sample", "--s", dest="sample", help = "Name of the sample, see meta_data.py", default= None)
 parser.add_option("--outdir", "--odir", dest="outdir", help = "Specify the output directory", default= "original")
+parser.add_option("--do_sys" , "--do_sys", action="store_true", dest = "do_sys", help = "convert jec and jer files", default = False)
+parser.add_option("--sys_type", "--sys_type", dest="sys_type", default= None)
+parser.add_option("--sys_dir", "--sys_dir", dest="sys_dir", default= None)
 
 (options,args) = parser.parse_args()
 year = options.year
@@ -24,6 +27,8 @@ region = options.region
 sample = options.sample
 outdir = options.outdir
 mode = options.mode
+systype = options.sys_type
+sysdir = options.sys_dir
 
 if options.do_train and mode == "binary":
     filepathTT = meta_data.inputfilepath['TTCR'][year]
@@ -34,7 +39,22 @@ elif options.do_train and mode == "ternary":
     filepathZJets = meta_data.inputfilepath['ZJetsCR'][year]
     filenameZJets = meta_data.inputfilename['ZJetsCR']['ZJets']
 
-if options.do_eval or options.do_test:
+if options.do_test and mode == "binary": #Only converts test dataset for testing
+    if region == 'TTCR':
+        filepath = meta_data.inputfilepath[region][year]
+        if year!= "UL18": filename = meta_data.datafilename[region][sample].rstrip('.root') + '_test.root'
+        else: filename = meta_data.datafilename_UL18[region][sample].rstrip('.root') + '_test.root'
+    else:
+        print ("You must give the region and the sample argument to prepare the dataset for the evalution. For example: --region=VBSSR --sample=ssWW")
+        sys.exit()
+
+if options.do_sys and mode == "binary": #Only converts test part
+    if systype is not None and sysdir is not None:
+        filepath = meta_data.inputfilepath[region][year]+systype+'/'+sysdir+'/'
+        filename = meta_data.inputfilename[region][sample][:-len('.root')]+'_'+systype+'_'+sysdir+'_test.root'
+    else: sys.exit("Please give sys_type and sys_dir!")
+
+if options.do_eval:
     if region is not None and sample is not None:
         filepath = meta_data.inputfilepath[region][year]
         if "Data_" in sample:
@@ -51,14 +71,33 @@ labels = meta_data.labels
 weights = meta_data.weights
 
 if mode == "binary" and options.do_train:
-    print ("***Converting {} file to pandas dataframe***".format(filepathTT+filenameTT))
-    train_data = prepare_input_dataset_binarytrain(filepathTT, filenameTT, treename, inputvariables, labels, weights)
-    train_data = shuffle(train_data, random_state=42)
-    print (train_data)
-    print ("Total number of W+: {} ".format(train_data[labels[0]].value_counts()[-1.0]))
-    print ("Total number of W-: {} ".format(train_data[labels[0]].value_counts()[1.0]))
-    df_train, df_valandtest = train_test_split(train_data, test_size=0.4)
-    df_val, df_test = train_test_split(df_valandtest, test_size=0.5)
+
+    train_filename = filenameTT.rstrip('.root') + '_train.root'
+    val_filename = filenameTT.rstrip('.root') + '_val.root'
+    test_filename = filenameTT.rstrip('.root') + '_test.root'
+
+    train_file = filepathTT + train_filename
+    val_file = filepathTT + val_filename
+    test_file = filepathTT + test_filename
+
+    print ("***Converting {} file to pandas dataframe***".format(train_file))
+    df_train = prepare_input_dataset_binarytrain(filepathTT, train_filename, treename, inputvariables, labels, weights)
+    print (df_train)
+    print ("Total number of W+: {} ".format(df_train[labels[0]].value_counts()[-1.0]))
+    print ("Total number of W-: {} ".format(df_train[labels[0]].value_counts()[1.0]))
+    
+    print ("***Converting {} file to pandas dataframe***".format(val_file))
+    df_val = prepare_input_dataset_binarytrain(filepathTT, val_filename, treename, inputvariables, labels, weights)
+    print (df_val)
+    print ("Total number of W+: {} ".format(df_val[labels[0]].value_counts()[-1.0]))
+    print ("Total number of W-: {} ".format(df_val[labels[0]].value_counts()[1.0]))
+    
+    print ("***Converting {} file to pandas dataframe***".format(test_file))
+    df_test = prepare_input_dataset_binarytrain(filepathTT, test_filename, treename, inputvariables, labels, weights)
+    print (df_test)
+    print ("Total number of W+: {} ".format(df_test[labels[0]].value_counts()[-1.0]))
+    print ("Total number of W-: {} ".format(df_test[labels[0]].value_counts()[1.0]))
+
     opath = outdir + '/binary_training/{}'.format(year) + '/' 
     if not os.path.isdir(opath):
         os.makedirs(opath)
@@ -93,12 +132,21 @@ elif mode == "ternary" and options.do_train:
 elif mode == "binary" and options.do_test:
     print ("***Converting {} file to pandas dataframe***".format(filepath+filename))
     test_dataset = prepare_input_test(filepath, filename, treename, inputvariables, labels, weights) 
-    test_dataset = shuffle(test_dataset, random_state=42)
+    #test_dataset = shuffle(test_dataset, random_state=42)
     opath = outdir + '/test/{}'.format(year) + '/'
     if not os.path.isdir(opath):
         os.makedirs(opath)
     save_dataset(test_dataset, opath, "Test_{}_{}_{}".format(region, sample, year))
     print ("***Test files for \"{}\" are saved in \"{}\" dir in hdf5 format***".format(filename,opath))
+
+elif mode == "binary" and options.do_sys:
+    print ("***Converting {} file to pandas dataframe***".format(filepath+filename))
+    test_dataset = prepare_input_test(filepath, filename, treename, inputvariables, labels, weights)
+    opath = outdir + '/test/{}'.format(year) + '/'
+    if not os.path.isdir(opath):
+        os.makedirs(opath)
+    save_dataset(test_dataset, opath, "Test_{}_{}_{}_{}_{}".format(region, sample, year, systype ,sysdir))
+    print ("***Sys files for \"{}\" are saved in \"{}\" dir in hdf5 format***".format(filename,opath))
 
 elif options.do_eval:
     print ("***Converting {} file to pandas dataframe***".format(filepath+filename))

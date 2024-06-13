@@ -13,8 +13,8 @@ logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s: %(m
 from load_datasets import *
 
 parser = optparse.OptionParser()
-parser.add_option("--use_gpu" , "--use_gpu", action="store_true", dest = "gpu_train", help = "gpu training", default = False)
-parser.add_option("--gpu_device", type = "int", help = "choose from 0,1,2,3", default= 2)
+parser.add_option("--use_gpu" , "--use_gpu", action="store_true", dest = "gpu_train", help = "gpu training", default = True)
+parser.add_option("--gpu_device", type = "int", dest= "gpu_device", help = "choose from 0,1,2,3", default= 2)
 parser.add_option("--year", "--y", dest="year", help = "UL16preVFP, UL16postVFP, UL17, UL18", default= "UL18")
 parser.add_option("--outdir", "--outdir", dest="outdir", help = "Set a flag for the outdir of training results", default= None)
 (options,args) = parser.parse_args()
@@ -44,6 +44,7 @@ def train():
     print ("Start loading the training and validation dataset .....")
     train_dataset = Dataset('preprocessing/converted/binary_training/{y}/WpWn_train_{y}_0.awkd'.format(y=year), data_format='channel_last')
     val_dataset = Dataset('preprocessing/converted/binary_training/{y}/WpWn_val_{y}_0.awkd'.format(y=year), data_format='channel_last')
+    
     model_type = 'particle_net_lite' # choose between 'particle_net' and 'particle_net_lite'
     print ("Using model {}".format(model_type))
     num_classes = train_dataset.y.shape[1]
@@ -55,14 +56,17 @@ def train():
         model = get_particle_net_lite(num_classes, input_shapes)
     else:
         model = get_particle_net(num_classes, input_shapes)
-    
+   
+    sys.exit() 
     # Training parameters
-    batch_size = 1024 if 'lite' in model_type else 384
+    #batch_size = 1024 if 'lite' in model_type else 384 #This is doing overtraining with manuallsplitting
+    batch_size = 540 if 'lite' in model_type else 384 #Test to fix this
+    #batch_size = 540 if 'lite' in model_type else 384
     epochs = 30
     print ("Hyper parameters: \n Epochs: {} \n batch_size: {} \n".format(epochs,batch_size))
 
     def lr_schedule(epoch):
-        lr = 1e-3
+        lr = 1e-4
         if epoch > 10:
             lr *= 0.1
         elif epoch > 20:

@@ -10,18 +10,24 @@ import logging
 logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] %(levelname)s: %(message)s')
 
 parser = optparse.OptionParser()
-parser.add_option("--mode" , "--mode", dest = "mode", help = "binary/ternary", default = "binary")
+parser.add_option("--mode" , "--mode", dest = "mode", help = "binary/ternary/ternary_btag. In the last one, we do binary class in WZ", default = "binary")
 parser.add_option("--train" , "--train", action="store_true", dest = "do_train", help = "train mode", default = False)
 parser.add_option("--eval" , "--eval", action="store_true", dest = "do_eval", help = "eval mode, no labels will be added", default = False)
 parser.add_option("--test" , "--test", action="store_true", dest = "do_test", help = "test mode, labels will be added", default = False)
 parser.add_option("--year", "--y", dest="year", default= "UL18")
 parser.add_option("--region", "--r", dest="region", default= None)
 parser.add_option("--sample", "--s", dest="sample", default= None)
+parser.add_option("--do_sys" , "--do_sys", action="store_true", dest = "do_sys", help = "convert jec and jer files", default = False)
+parser.add_option("--sys_type", "--sys_type", dest="sys_type", default= None)
+parser.add_option("--sys_dir", "--sys_dir", dest="sys_dir", default= None)
+
 (options,args) = parser.parse_args()
 sample = options.sample
 region = options.region
 year = options.year
 mode = options.mode
+systype = options.sys_type
+sysdir = options.sys_dir
 
 def _transform(dataframe, start=0, stop=-1, jet_size=0.8):
     from collections import OrderedDict
@@ -79,7 +85,7 @@ def _transform(dataframe, start=0, stop=-1, jet_size=0.8):
             print ("You have selected train/test option however mode (binary/ternary) is not specified which is required to assign the labels")
             sys.exit()
 
-    if options.do_test:
+    if options.do_test or options.do_sys:
         old_label = df['lep_charge']
         print (old_label)
         if region == 'TTCR':
@@ -180,9 +186,9 @@ def main():
         elif mode == "ternary":
             srcDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/original/ternary_training/{}'.format(year) 
             destDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/converted/ternary_training/{}'.format(year) 
-            convert(os.path.join(srcDir, 'WpWnZ_train_nobtag_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_train_nobtag_{}'.format(year))
-            convert(os.path.join(srcDir, 'WpWnZ_val_nobtag_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_val_nobtag_{}'.format(year))
-            convert(os.path.join(srcDir, 'WpWnZ_test_nobtag_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_test_nobtag_{}'.format(year))
+            convert(os.path.join(srcDir, 'WpWnZ_train_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_train_{}'.format(year))
+            convert(os.path.join(srcDir, 'WpWnZ_val_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_val_{}'.format(year))
+            convert(os.path.join(srcDir, 'WpWnZ_test_{}.h5'.format(year)), destdir=destDir, basename='WpWnZ_test_{}'.format(year))
             print ("***Successfully converted training sets for ternary classification***")
     elif options.do_test:
         srcDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/original/test/{}'.format(year) 
@@ -202,6 +208,15 @@ def main():
             print ("***Successfully converted eval sets***")
         elif options.sample is None or options.region is None:
             print ("Please enter region and sample of the eval dataset")
+
+    elif options.do_sys:
+        srcDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/original/test/{}'.format(year)
+        destDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/converted/test/{}'.format(year)
+        if options.sample is not None and options.region is not None and sysdir is not None and systype is not None:
+            print ("Converting {}/Test_{}_{}_{}_{}_{}.h5 .................".format(srcDir, region, sample, year, systype, sysdir))
+            convert(os.path.join(srcDir, 'Test_{}_{}_{}_{}_{}.h5'.format(region, sample, year, systype, sysdir)), destdir=destDir, basename='Test_{}_{}_{}_{}_{}'.format(region, sample, year, systype, sysdir))
+            print ("***Successfully converted test sets of systematics variations***")
+
     else:
         print ("Please give any option --train (--binary or --ternary), --test or --eval (with --sample and --region)")
 if __name__ == '__main__':
