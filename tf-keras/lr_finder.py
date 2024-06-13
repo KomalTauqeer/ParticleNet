@@ -5,6 +5,7 @@ import optparse
 import numpy as np
 import awkward
 import tensorflow as tf
+from tensorflow.keras.callbacks import Callback
 from tensorflow import keras
 from tf_keras_model import get_particle_net, get_particle_net_lite
 import matplotlib.pyplot as plt
@@ -38,12 +39,66 @@ if gpu_training:
         # Visible devices must be set before GPUs have been initialized
         print(e)
 
-def train_multi():
-    #Load training and validation dataset
-    #train_dataset = Dataset('preprocessing/converted/multitraining_sets/WpWnZ_genmatched_train_{}_0.awkd'.format(year), data_format='channel_last')
-    #val_dataset = Dataset('preprocessing/converted/multitraining_sets/WpWnZ_genmatched_val_{}_0.awkd'.format(year), data_format='channel_last')
+
+class LRFinder(Callback):
+    """Callback that exponentially adjusts the learning rate after each training batch between start_lr and
+    end_lr for a maximum number of batches: max_step. The loss and learning rate are recorded at each step allowing
+    visually finding a good learning rate as per https://sgugger.github.io/how-do-you-find-a-good-learning-rate.html via
+    the plot method.
+    """
+
+    def __init__(self, start_lr: float = 1e-5, end_lr: float = 10, max_steps: int = 1500, smoothing=0.9):
+        super(LRFinder, self).__init__()
+        self.start_lr, self.end_lr = start_lr, end_lr
+        self.max_steps = max_steps
+        self.smoothing = smoothing
+        self.step, self.best_loss, self.avg_loss, self.lr = 0, 0, 0, 0
+        self.lrs, self.losses = [], []
+
+    def on_train_begin(self, logs=None):
+        self.step, self.best_loss, self.avg_loss, self.lr = 0, 0, 0, 0
+        self.lrs, self.losses = [], []
+
+    def on_train_batch_begin(self, batch, logs=None):
+        self.lr = self.exp_annealing(self.step)
+        tf.keras.backend.set_value(self.model.optimizer.lr, self.lr)
+
+    def on_train_batch_end(self, batch, logs=None):
+        logs = logs or {}
+        loss = logs.get('loss')
+        step = self.step
+        if loss:
+            self.avg_loss = self.smoothing * self.avg_loss + (1 - self.smoothing) * loss
+            smooth_loss = self.avg_loss / (1 - self.smoothing ** (self.step + 1))
+            self.losses.append(smooth_loss)
+            self.lrs.append(self.lr)
+
+            if step == 0 or loss < self.best_loss:
+                self.best_loss = loss
+
+            if smooth_loss > 4 * self.best_loss or tf.math.is_nan(smooth_loss):
+                self.model.stop_training = True
+
+        if step == self.max_steps:
+            self.model.stop_training = True
+
+        self.step += 1
+
+    def exp_annealing(self, step):
+        return self.start_lr * (self.end_lr / self.start_lr) ** (step * 1. / self.max_steps)
+
+    def plot(self):
+        fig, ax = plt.subplots(1, 1)
+        ax.set_ylabel('Loss')
+        ax.set_xlabel('Learning Rate (log scale)')
+        ax.set_xscale('log')
+        ax.xaxis.set_major_formatter(plt.FormatStrFormatter('%.0e'))
+        ax.plot(self.lrs, self.losses)
+        plt.savefig('Lr_finder.pdf')
+
+def find_best_learning_rate():
+    #Load training 
     train_dataset = Dataset('preprocessing/converted/btag_test/multitraining_sets/WpWnZ_genmatched_train_{}_0.awkd'.format(year), data_format='channel_last')
-    val_dataset = Dataset('preprocessing/converted/btag_test/multitraining_sets/WpWnZ_genmatched_val_{}_0.awkd'.format(year), data_format='channel_last')
    
     model_type = 'particle_net_lite' # choose between 'particle_net' and 'particle_net_lite'
     num_classes = train_dataset.y.shape[1]
@@ -57,51 +112,13 @@ def train_multi():
     #Training parameters
     batch_size = 1024 if 'lite' in model_type else 128
     epochs = 20
-    
-    #def lr_schedule(epoch): #initial
-    #    lr = 1e-4
-    #    if epoch > 10:
-    #        lr *= 0.1
-    #    elif epoch > 20:
-    #        lr *= 0.01
-    #    logging.info('Learning rate: %f'%lr)
-    #    return lr
    
-    #def lr_schedule(epoch): #culrsch
-    #    lr = 1e-5
-    #    if epoch > 5:
-    #        lr *= 0.1
-    #    elif epoch > 10:
-    #        lr *= 0.01
-    #    elif epoch > 15:
-    #        lr *= 0.001
-    #    logging.info('Learning rate: %f'%lr)
-    #    return lr
+    lr_finder = LRFinder()
 
-    #def lr_schedule(epoch): #culrsch2
-    #    lr = 1e-5
-    #    if epoch > 3:
-    #        lr = 1e-4
-    #    elif epoch > 5 and epoch < 10:
-    #        lr = 1e-3
-    #    elif epoch > 10:
-    #        lr = 1e-4
-    #    elif epoch > 15:
-    #        lr = 1e-5
-    #    logging.info('Learning rate: %f'%lr)
-    #    return lr
-
-    #lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay( #explrsch --- a flop
-    #                0.001,  # Base learning rate.
-    #                5000,       # Decay step.
-    #                0.8,          # Decay rate.
-    #                staircase=True)
-
-    opt = keras.optimizers.Adam(learning_rate= 1e-4)
-    #opt = keras.optimizers.Adam(learning_rate= lr_schedule(0))
+    #opt = keras.optimizers.Adam(learning_rate= lr_finder())
     
     model.compile(loss='categorical_crossentropy', 
-                  optimizer=opt,
+                  optimizer='adam',
                   metrics=['accuracy'])
     
     #model.summary()
@@ -116,51 +133,32 @@ def train_multi():
     
     # Prepare callbacks for model saving and for learning rate adjustment.
     checkpoint = keras.callbacks.ModelCheckpoint(filepath=filepath,
-                                 monitor='val_accuracy',
+                                 monitor='accuracy',
                                  verbose=1,
                                  save_best_only=True)
     
     #lr_scheduler = keras.callbacks.LearningRateScheduler(lr_schedule)
     progress_bar = keras.callbacks.ProgbarLogger()
-    earlystopping = keras.callbacks.EarlyStopping(verbose=True, patience=10, monitor='val_loss')
+    earlystopping = keras.callbacks.EarlyStopping(verbose=True, patience=10, monitor='loss')
     log_dir = outdir + "/logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
     
+    callbacks = [checkpoint, lr_finder, progress_bar, earlystopping, tensorboard_callback]
     #callbacks = [checkpoint, lr_scheduler, progress_bar, earlystopping, tensorboard_callback]
-    callbacks = [checkpoint, progress_bar, earlystopping, tensorboard_callback]
+    #callbacks = [checkpoint, progress_bar, earlystopping, tensorboard_callback]
     
     train_dataset.shuffle()
-    val_dataset.shuffle()
     
-    history = model.fit(train_dataset.X, train_dataset.y,
+    _ = model.fit(train_dataset.X, train_dataset.y,
               batch_size=batch_size,
               epochs=epochs,
-              validation_data=(val_dataset.X, val_dataset.y),
               shuffle=True,
               callbacks=callbacks)
     
-    # summarize history for accuracy
-    plt.plot(history.history['accuracy'])
-    plt.plot(history.history['val_accuracy'])
-    plt.title('model accuracy')
-    plt.ylabel('accuracy')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'val'], loc='upper left')
-    plt.savefig('{}/accuracy.pdf'.format(outdir))
-    plt.clf()
-    
-    # summarize history for loss
-    plt.plot(history.history['loss'])
-    plt.plot(history.history['val_loss'])
-    plt.title('model loss')
-    plt.ylabel('loss')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'val'], loc='upper left')
-    plt.savefig('{}/loss.pdf'.format(outdir))
-    plt.close()
+    lr_finder.plot()
 
 def main():
-    train_multi()
+    find_best_learning_rate()
 
 if __name__ == "__main__":
     main()

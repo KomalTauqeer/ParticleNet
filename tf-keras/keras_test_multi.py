@@ -13,6 +13,7 @@ from matplotlib.lines import Line2D
 plt.rcParams["mathtext.fontset"] = "cm"
 from sklearn.metrics import confusion_matrix,ConfusionMatrixDisplay
 from sklearn.metrics import roc_curve,RocCurveDisplay,auc
+from sklearn.metrics import roc_auc_score
 from sklearn.metrics import classification_report
 import logging
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s: %(message)s')
@@ -21,6 +22,7 @@ from itertools import cycle, combinations
 from load_datasets import Dataset
 from ROOT import *
 from array import array
+import shap
 
 parser = optparse.OptionParser()
 parser.add_option("--test" , action="store_true", dest = "do_test", help = "test mode", default = True)
@@ -59,47 +61,144 @@ def plot_tagger_output_multi(predicted_score, true_score, node, odir):
     plt.savefig('{}/PNLite_WpWnZ_score_{}.pdf'.format(odir,node+1))
     plt.close()
 
-def plot_roc_OvsO_scheme(nclasses, predicted_score, true_score, odir):
-    n_classes = nclasses
+def plot_roc_OvsO_scheme_seperate(nclasses, predicted_score, true_score, odir):
+    true_labels = np.argmax(true_score, axis=1)
 
-    #Possibles pairs of classes
-    pair_list = list(combinations([0,1,2], 2))
-    print (pair_list)
-   
+    pair_list = list(combinations(np.unique(true_labels), 2))
+    print(pair_list)
+
     pair_scores = []
     mean_tpr = dict()
-
-    for ix, (label_a, label_b) in enumerate(pair_list):
-        a_mask = true_score[:, label_a] == 1
-        b_mask = true_score[:, label_b] == 1
-        print (a_mask)
-        print (b_mask)
-        ab_mask = np.logical_or(a_mask, b_mask)
+    fpr_grid = np.linspace(0.0, 1.0, 1000)
     
+    for ix, (label_a, label_b) in enumerate(pair_list):
+        print (label_a)
+        print (label_b)
+        
+        a_mask = true_labels == label_a
+        b_mask = true_labels == label_b
+        ab_mask = np.logical_or(a_mask, b_mask)
+        print (a_mask)
         a_true = a_mask[ab_mask]
-        b_true = b_mask[ab_mask] 
-        print ("**************************")
-    # Compute ROC curve and ROC area for each class
-    #fpr = dict()
-    #tpr = dict()
-    #roc_auc = dict()
-    #for i in range(n_classes):
-    #    fpr[i], tpr[i], _ = roc_curve(true_score[:, i], predicted_score[:, i])
-    #    roc_auc[i] = auc(fpr[i], tpr[i])
-    #
-    ## Plot of a ROC curve for a specific class
-    #for i in range(n_classes):
-    #    plt.figure()
-    #    plt.plot(fpr[i], tpr[i], label='ROC curve (area = %0.2f)' % roc_auc[i])
-    #    plt.plot([0, 1], [0, 1], 'k--')
-    #    plt.xlim([0.0, 1.0])
-    #    plt.ylim([0.0, 1.05])
-    #    plt.xlabel('False Positive Rate')
-    #    plt.ylabel('True Positive Rate')
-    #    plt.title('Receiver operating characteristic (ROC)')
-    #    plt.legend(loc="lower right", fontsize ='small')
-    #    plt.savefig('{}/ROC_%s.pdf'.format(odir, i))
-    #plt.close()
+        #print (a_true)
+        b_true = b_mask[ab_mask]
+
+        #My labels are the index values so using them directly
+        
+        fpr_a, tpr_a, _ = roc_curve(a_true, predicted_score[ab_mask, label_a])
+        fpr_b, tpr_b, _ = roc_curve(b_true, predicted_score[ab_mask, label_b])
+        auc_a = auc(fpr_a, tpr_a)
+        auc_b = auc(fpr_b, tpr_b)
+    
+        mean_tpr[ix] = np.zeros_like(fpr_grid)
+        mean_tpr[ix] += np.interp(fpr_grid, fpr_a, tpr_a)
+        mean_tpr[ix] += np.interp(fpr_grid, fpr_b, tpr_b)
+        mean_tpr[ix] /= 2
+        mean_score = auc(fpr_grid, mean_tpr[ix])
+        pair_scores.append(mean_score)
+ 
+        labels_string = {0: "$W^{+}$", 1: "$W^{-}$", 2: "$Z$"}
+        #Plot separate OvsO curves for each pair 
+        fig, ax = plt.subplots(figsize=(6, 6))
+        #plt.plot(
+        #    mean_tpr[ix],
+        #    1-fpr_grid,
+        #    label=f"{label_a} vs {label_b} (AUC = {mean_score :.2f})",
+        #    linestyle=":",
+        #    linewidth=2,
+        #)
+        plt.plot(tpr_a, 1-fpr_a, lw=2, label="M+B (AUC = {:.2f})".format(auc_a))
+        plt.plot([0, 1], [1, 0], 'k--', lw=2, label="No discrimination")
+        plt.xlim([0.0, 1.05])
+        plt.ylim([0.0, 1.05])
+        plt.ylabel(r'1 - ({} efficiency)'.format(labels_string[label_b]), fontsize = 'large')
+        plt.xlabel(r'{} efficiency'.format(labels_string[label_a]), fontsize = 'large')
+        plt.legend()
+        #plt.plot(tpr_b, 1-fpr_b, lw=2)
+        
+        plt.savefig(f'{odir}/{label_a}_vs_{label_b}.pdf')       
+        plt.close() 
+        
+
+def plot_roc_OvsO_scheme(nclasses, predicted_score, true_score, odir):
+    true_labels = np.argmax(true_score, axis=1)
+
+    pair_list = list(combinations(np.unique(true_labels), 2))
+    print(pair_list)
+
+    pair_scores = []
+    mean_tpr = dict()
+    fpr_grid = np.linspace(0.0, 1.0, 1000)
+    
+    for ix, (label_a, label_b) in enumerate(pair_list):
+        print (label_a)
+        print (label_b)
+        
+        a_mask = true_labels == label_a
+        b_mask = true_labels == label_b
+        ab_mask = np.logical_or(a_mask, b_mask)
+        print (a_mask)
+        a_true = a_mask[ab_mask]
+        #print (a_true)
+        b_true = b_mask[ab_mask]
+
+        #My labels are the index values so using them directly
+        
+        fpr_a, tpr_a, _ = roc_curve(a_true, predicted_score[ab_mask, label_a])
+        fpr_b, tpr_b, _ = roc_curve(b_true, predicted_score[ab_mask, label_b])
+    
+        mean_tpr[ix] = np.zeros_like(fpr_grid)
+        mean_tpr[ix] += np.interp(fpr_grid, fpr_a, tpr_a)
+        mean_tpr[ix] += np.interp(fpr_grid, fpr_b, tpr_b)
+        mean_tpr[ix] /= 2
+        mean_score = auc(fpr_grid, mean_tpr[ix])
+        pair_scores.append(mean_score)
+ 
+    macro_roc_auc_ovo = roc_auc_score(
+        true_labels,
+        predicted_score,
+        multi_class="ovo",
+        average="macro",
+    )
+    print(f"Macro-averaged One-vs-One ROC AUC score:\n{macro_roc_auc_ovo:.2f}")
+
+    labels_string = {0: "$W^{+}$", 1: "$W^{-}$", 2: "$Z$"}
+    #Plot all OvsO together 
+    ovo_tpr = np.zeros_like(fpr_grid)
+    fig, ax = plt.subplots(figsize=(6, 6))
+    
+    for ix, (label_a, label_b) in enumerate(pair_list):
+        ovo_tpr += mean_tpr[ix]
+        ax.plot(
+            fpr_grid,
+            mean_tpr[ix],
+            label=f"{labels_string[label_a]} vs {labels_string[label_b]} (area = {pair_scores[ix]:.2f})",
+            linewidth=3,
+        )
+    
+    ovo_tpr /= sum(1 for pair in enumerate(pair_list))
+    
+    ax.plot(
+        fpr_grid,
+        ovo_tpr,
+        label=f"One-vs-One macro-average (area = {macro_roc_auc_ovo:.2f})",
+        linestyle=":",
+        linewidth=3,
+    )
+    ax.plot([0, 1], [0, 1], "k--")
+    _ = ax.set(
+        xlabel="1 - background rejection",
+        ylabel="Signal efficiency",
+        title="",
+        aspect="equal",
+        xlim=(0., 1.),
+        ylim=(0., 1.05),
+    )
+    ax.xaxis.get_label().set_fontsize(12)
+    ax.yaxis.get_label().set_fontsize(12)
+    ax.legend()
+    plt.savefig("{}/ROC_OvsO.pdf".format(odir))
+    plt.close()
 
 def roc_curves_multi(predicted_score,true_score,n_classes, odir):
 
@@ -255,18 +354,21 @@ def main():
         os.makedirs(outdir)
 
     if options.do_test:
-        #eval_dataset = Dataset('preprocessing/converted/multitraining_sets/WpWnZ_genmatched_test_{}_0.awkd'.format(year), data_format='channel_last')
-        eval_dataset = Dataset('preprocessing/converted/btagVars/WpWnZ_genmatched_test_{}_0.awkd'.format(year), data_format='channel_last')
+        eval_dataset = Dataset('preprocessing/converted/multitraining_sets/WpWnZ_genmatched_test_{}_0.awkd'.format(year), data_format='channel_last')
+        #add_feature_file
+        #eval_dataset = Dataset('preprocessing/converted/btag_test/multitraining_sets/WpWnZ_genmatched_test_{}_0.awkd'.format(year), data_format='channel_last')
     if options.do_eval and options.sample is not None and options.region is not None:
         eval_dataset = Dataset('preprocessing/converted/eval_sets/{}_{}_{}_0.awkd'.format(region, sample, year), data_format='channel_last')
     elif options.do_eval and (options.sample is None or options.region is None):
         print ("Please give sample and region to evaluate the dataset")
 
     #Load model
-    #model = keras.models.load_model("successful_multitrain_results/Nov7_lrsch_1e-4_genmatchedTT/model_checkpoints/particle_net_lite_model.030.h5")
+    model = keras.models.load_model("03052024_retraining_fixedgenmatching/model_checkpoints/particle_net_lite_model.029.h5") #No add_feature
+    #model = keras.models.load_model("culrsch2_test_training/model_checkpoints/particle_net_lite_model.020.h5") #Best so far for add_feature
+    #model = keras.models.load_model("train_wthoutlrsch_0p1_opt1e-4/model_checkpoints/particle_net_lite_model.018.h5")  
+    #model = keras.models.load_model("second_test_add_features_training_lrsch/model_checkpoints/particle_net_lite_model.013.h5") 
     #retrained genmatchedZ model
-    model = keras.models.load_model("successful_genmatchedZ_multitrain/model_checkpoints/particle_net_lite_model.030.h5")
-    #model = keras.models.load_model("training_history/model_checkpoints/particle_net_lite_model.030.h5")
+    #model = keras.models.load_model("successful_genmatchedZ_multitrain/model_checkpoints/particle_net_lite_model.030.h5")
     #retrained genmatched+btagVars model
     #model = keras.models.load_model("multitrain_addfeatures/model_checkpoints/particle_net_lite_model.029.h5")
     #model used everywhere without gen matching
@@ -275,20 +377,22 @@ def main():
     
     eval_dataset.shuffle()
     
-    PN_output= (model.predict(eval_dataset.X))
-    #print ("Output: ")
-    print (PN_output)
-    predicted_value = np.argmax(PN_output, axis=1)
+    #PN_output= (model.predict(eval_dataset.X))
+    #print ("PN Output: ")
+    #print (PN_output)
+    #predicted_value = np.argmax(PN_output, axis=1)
     
     if options.do_test: 
-        true_labels = eval_dataset.y
-        print ("Truth: ")
-        print (true_labels)
-        true_value = np.argmax(true_labels, axis=1)
-   
+        #true_labels = eval_dataset.y
+        #print ("Truth: ")
+        #print (true_labels)
+        #true_value = (np.array(np.argmax(true_labels, axis=1)).T).flatten()
+        #print (true_value)
+
         if roc_multi: 
             #roc_curves_multi(PN_output, true_labels, 3, outdir)
-            plot_roc_OvsO_scheme(3, PN_output, true_labels, outdir)
+            #plot_roc_OvsO_scheme(3, PN_output, true_labels, outdir)
+            plot_roc_OvsO_scheme_seperate(3, PN_output, true_labels, outdir)
 
         if svsb_curves:
             svssb = dict()
@@ -308,27 +412,39 @@ def main():
                 plot_tagger_output_multi(PN_output, true_labels, node, outdir)
 
         if save_root_file:
+            #successful attempt of saving the outputs to a root file
+            PN_output= model.predict(eval_dataset.X)
+            true_labels = eval_dataset.y
+            true_class = np.array([np.argmax(true_labels, axis=1)]).T #0 for W+, 1 for W-, 2 for Z
+
+            print ("Output : ")
+            print (PN_output)
+            print (true_class.flatten())
+            nrows, ncolumns = (np.shape(PN_output))
+            #predicted_probabilites = []
+            #for row in range(nrows):
+            #    predicted_probabilites.append(PN_output[row][true_class[row]])
+            #print (np.array(predicted_probabilites).flatten())
+            #print (np.shape(predicted_probabilites))
+            #print ()
+
+            truelabels = true_class.flatten()
+
             file1 = TFile.Open('{}/TT_UL18_ternarytest.root'.format(outdir), "RECREATE")
             tree = TTree("AnalysisTree", "AnalysisTree")
-            dnnscores_nodeWp = array('d', [0])
-            dnnscores_nodeWn = array('d', [0])
-            dnnscores_nodeZ = array('d', [0])
-            truelabels_nodeWp = array('d', [0])
-            truelabels_nodeWn = array('d', [0])
-            truelabels_nodeZ = array('d', [0])
-            tree.Branch('dnnscores_nodeWp', dnnscores_nodeWp, 'dnnscores_nodeWp/D')
-            tree.Branch('dnnscores_nodeWn', dnnscores_nodeWn, 'dnnscores_nodeWn/D')
-            tree.Branch('dnnscores_nodeZ', dnnscores_nodeZ, 'dnnscores_nodeZ/D')
-            tree.Branch('truelabels_nodeWp', truelabels_nodeWp, 'truelabels_nodeWp/D')
-            tree.Branch('truelabels_nodeWn', truelabels_nodeWn, 'truelabels_nodeWn/D')
-            tree.Branch('truelabels_nodeZ', truelabels_nodeZ, 'truelabels_nodeZ/D')
-            for itr in range(len(PN_output[:,0])):
-                dnnscores_nodeWp[0] = PN_output[itr,0]
-                dnnscores_nodeWn[0] = PN_output[itr,1]
-                dnnscores_nodeZ[0] = PN_output[itr,2]
-                truelabels_nodeWp[0] = true_labels[itr,0]
-                truelabels_nodeWn[0] = true_labels[itr,1]
-                truelabels_nodeZ[0] = true_labels[itr,2]
+            helperWp = array('f', [0])
+            helperWn = array('f', [0])
+            helperZ = array('f', [0])
+            helperlabels = array('f', [0])
+            tree.Branch('jetchargetagger_prob_nodeWp', helperWp, 'jetchargetagger_prob_nodeWp/F')
+            tree.Branch('jetchargetagger_prob_nodeWn', helperWn, 'jetchargetagger_prob_nodeWn/F')
+            tree.Branch('jetchargetagger_prob_nodeZ', helperZ, 'jetchargetagger_prob_nodeZ/F')
+            tree.Branch('jetchargetagger_truth_ind', helperlabels, 'jetchargetagger_truth_ind/F')
+            for itr in range(nrows):
+                helperWp[0] = PN_output[itr,0]
+                helperWn[0] = PN_output[itr,1]
+                helperZ[0] = PN_output[itr,2]
+                helperlabels[0] = truelabels[itr]
                 tree.Fill()
             tree.Write()
             file1.Write()
@@ -336,7 +452,7 @@ def main():
 
 
 if __name__ == '__main__':
-    roc_multi = True
+    roc_multi = False
     output_score = False
     report = False
     confusion_matrix = False

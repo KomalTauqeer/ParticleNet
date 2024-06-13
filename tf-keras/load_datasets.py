@@ -25,6 +25,7 @@ class Dataset(object):
         if len(feature_dict)==0:
             feature_dict['points'] = ['part_etarel', 'part_phirel']
             feature_dict['features'] = ['part_pt_log', 'part_e_log', 'part_etarel', 'part_phirel', 'part_charge', 'part_deltaR']
+            #feature_dict['add_features'] = ['doublebtag']
             feature_dict['mask'] = ['part_pt_log']
         self.label = label
         self.pad_len = pad_len
@@ -37,7 +38,6 @@ class Dataset(object):
     def _load(self):
         logging.info('Start loading file %s' % self.filepath)
         counts = None
-        #with awkward0.load(self.filepath) as a:
         with awkward.load(self.filepath) as a:
             self._label = a[self.label]
             for k in self.feature_dict:
@@ -58,6 +58,10 @@ class Dataset(object):
                         arrs.append(a[col])
                 self._values[k] = np.stack(arrs, axis=self.stack_axis)
             #print(self._values['features'])
+            #print(np.shape(self._values['features']))
+            #print(self._values['add_features'])
+            #print(np.shape(self._values['add_features']))
+            #print(self._values)
                     
         logging.info('Finished loading file %s' % self.filepath)
 

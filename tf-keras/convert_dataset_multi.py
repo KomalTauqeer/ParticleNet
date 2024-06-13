@@ -50,6 +50,14 @@ def _transform(dataframe, start=0, stop=-1, jet_size=0.8):
     jet_p4 = p4.sum()
 
     # outputs
+    doublebtag = df["jetsAk8PuppiSubstructure_SoftDropPuppi.m_btag_DeepDoubleBvLJet_probHbb"].values
+    #doublebtag = np.ma.masked_invalid(doublebtag) #Mark Nan values invalid
+    doublebtag = np.nan_to_num(doublebtag, nan=999)
+    v['doublebtag'] = doublebtag
+    if np.isnan(v['doublebtag']).any(): 
+        print ("Nan values in add_feature")
+        print (np.argwhere(np.isnan(v['doublebtag'])))
+    
     #labels are read in all cases but should only be used for training and evaluation on TT and Z+Jets or ssWW or osWW samples. In all other cases they are meaning less.
     old_label = df['lep_charge']
     print (np.count_nonzero(old_label==0.0))

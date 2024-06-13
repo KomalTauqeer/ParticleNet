@@ -1,4 +1,5 @@
 variables = ["PF_Px", "PF_Py", "PF_Pz", "PF_E", "PF_q"]
+global_variables = ["jetsAk8PuppiSubstructure_SoftDropPuppi.m_btag_DeepDoubleBvLJet_probHbb"]
 
 labels = ['lep_charge']
 treename = "AnalysisTree"
@@ -7,13 +8,13 @@ inputfilepath = {  'TTCR': {
                        "UL16preVFP": "/ceph/ktauqeer/ULNtuples/UL16preVFP/TTCR/" ,
                        "UL16postVFP": "/ceph/ktauqeer/ULNtuples/UL16postVFP/TTCR/",
                        "UL17": "/ceph/ktauqeer/ULNtuples/UL17/TTCR/",
-                       "UL18": "/ceph/ktauqeer/JetChargeTaggerNtuples/UL18/TTCR/",
+                       "UL18": "/ceph/ktauqeer/ULNtuples/UL18/TTCR/",
                       },
                    'ZJetsCR': {
                              "UL16preVFP": "/ceph/ktauqeer/ULNtuples/UL16preVFP/ZJetsCR/" ,
                              "UL16postVFP": "/ceph/ktauqeer/ULNtuples/UL16postVFP/ZJetsCR/",
                              "UL17": "/ceph/ktauqeer/ULNtuples/UL17/ZJetsCR/",
-                             "UL18": "/ceph/ktauqeer/JetChargeTaggerNtuples/UL18/ZJetsCR/",
+                             "UL18": "/ceph/ktauqeer/ULNtuples/UL18/ZJetsCR/",
                             },
                    'VBSSR': {
                              "UL16preVFP": "/ceph/ktauqeer/ULNtuples/UL16preVFP/VBSSR/" ,
@@ -28,11 +29,15 @@ inputfilename = { 'TTCR': {
                         "TTGenMatched": "TTCR_TTToSemiLeptonic_genmatched.root",
                         "SingleMuon": "TTCR_SingleMuon_combined.root",
                         "SingleElectron": "TTCR_SingleElectron_combined.root",
+                        "WJet": "TTCR_WJetsToLNu_combined.root",
+                        "ST": "TTCR_ST_combined.root",
+                        "QCD": "TTCR_QCD_combined.root",
                         },
                   'ZJetsCR': {
                           #"ZJets": "ZJetsCR_ZJets_UL18_genmatchedZ_0To645000.root",
                           #"ZJets": "ZJetsCR_ZJets_UL18_newgenmatchedZ_fixedbug_180124_mod2_645500.root",
-                          "ZJets": "ZJetsCR_ZJets_HTcombined_mod2.root",
+                          #"ZJets": "ZJetsCR_ZJets_HTcombined_mod2.root",
+                          "ZJets": "ZJetsCR_ZJets_UL18_genmatched_03052024_mod2_645500.root",
 
                            },
 

@@ -70,7 +70,8 @@ def main():
         
     
     treename = meta_data.treename
-    inputvariables = meta_data.variables 
+    inputvariables = meta_data.variables
+    addVars = meta_data.global_variables 
     #if options.do_train: labels = meta_data.labels
     labels = meta_data.labels #I need to read labels in all cases as the Class Dataset the loads the awkd file for PN needs labels.
 
@@ -82,8 +83,16 @@ def main():
         print ("***Converting {} file to pandas dataframe***".format(filepathTT+filenameTT))
         TT_df = prepare_input_multitrain(filepathTT, filenameTT, treename, 'TT', inputvariables, labels)
         print(TT_df)
+        TT_add_df = prepare_addinput_multitrain(filepathTT, filenameTT, treename, 'TT', addVars)
+        print(TT_add_df)
+        TT_df = TT_df.join(TT_add_df)
+        print(TT_df)
         print ("***Converting {} file to pandas dataframe***".format(filepathZJets+filenameZJets))
         ZJets_df = prepare_input_multitrain(filepathZJets, filenameZJets, treename, 'ZJets', inputvariables, labels)
+        print(ZJets_df)
+        ZJets_add_df = prepare_addinput_multitrain(filepathZJets, filenameZJets, treename, 'ZJets', addVars)
+        print(ZJets_add_df)
+        ZJets_df = ZJets_df.join(ZJets_add_df)
         print(ZJets_df)
 
         if (len(TT_df.columns) > len(ZJets_df.columns)):
