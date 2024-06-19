@@ -118,10 +118,12 @@ def prepare_input_test(filepath, filename, treename, variables, labels, weights)
     dataset = dataset.join(weights)
     return dataset
 
-def prepare_input_eval(filepath, filename, treename, variables, weights):
+def prepare_input_eval(filepath, filename, treename, variables, labels, weights):
     dataset = root2df(filepath+filename, treename, variables)
     dataset = unstack_multi_df(dataset)
+    labels = root2df(filepath+filename, treename, labels)
     weights = root2df(filepath+filename, treename, weights)
+    dataset = dataset.join(labels)
     dataset = dataset.join(weights)
     return dataset
 

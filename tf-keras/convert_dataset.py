@@ -85,7 +85,7 @@ def _transform(dataframe, start=0, stop=-1, jet_size=0.8):
             print ("You have selected train/test option however mode (binary/ternary) is not specified which is required to assign the labels")
             sys.exit()
 
-    if options.do_test or options.do_sys:
+    if options.do_test: #Only for binary mode
         old_label = df['lep_charge']
         print (old_label)
         if region == 'TTCR':
@@ -106,6 +106,22 @@ def _transform(dataframe, start=0, stop=-1, jet_size=0.8):
         else:
             print ("Invalid region or sample! Cannot assign labels. For converting test dataset, region and sample information is required for labels")
             sys.exit()
+ 
+    if options.do_eval or options.do_sys: #For ternary
+       #Here labels don't make sense and are only kept for the sake of the framework and shouldn't be used
+       #old_label = df['lep_charge']
+       #v['label'] = np.array(old_label)
+       #Want true labels for TT only
+       old_label = df['lep_charge']
+       print (np.count_nonzero(old_label==0.0))
+       print (np.count_nonzero(old_label==1.0))
+       print (np.count_nonzero(old_label==-1.0))
+       new_label = []
+       for i in old_label:
+           if i == -1: new_label.append([1,0,0])
+           if i == 1:new_label.append([0,1,0])
+           if i == 0: new_label.append( [0,0,1])
+       v['label'] = np.array(new_label)
 
     v['event_weight'] = df['event_weight'].values
     v['jet_pt'] = jet_p4.pt
@@ -210,11 +226,11 @@ def main():
             print ("Please enter region and sample of the eval dataset")
 
     elif options.do_sys:
-        srcDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/original/test/{}'.format(year)
-        destDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/converted/test/{}'.format(year)
+        srcDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/original/sys/'
+        destDir = '/work/ktauqeer/ParticleNet/tf-keras/preprocessing/converted/sys/'
         if options.sample is not None and options.region is not None and sysdir is not None and systype is not None:
-            print ("Converting {}/Test_{}_{}_{}_{}_{}.h5 .................".format(srcDir, region, sample, year, systype, sysdir))
-            convert(os.path.join(srcDir, 'Test_{}_{}_{}_{}_{}.h5'.format(region, sample, year, systype, sysdir)), destdir=destDir, basename='Test_{}_{}_{}_{}_{}'.format(region, sample, year, systype, sysdir))
+            print ("Converting {}/{}_{}_{}_{}_{}_eval.h5 .................".format(srcDir, region, sample, year, systype, sysdir))
+            convert(os.path.join(srcDir, '{}_{}_{}_{}_{}_eval.h5'.format(region, sample, year, systype, sysdir)), destdir=destDir, basename='Eval_{}_{}_{}_{}_{}'.format(region, sample, year, systype, sysdir))
             print ("***Successfully converted test sets of systematics variations***")
 
     else:

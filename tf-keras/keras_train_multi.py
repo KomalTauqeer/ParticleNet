@@ -42,8 +42,8 @@ if gpu_training:
 
 def train_multi():
     #Load training and validation dataset
-    train_dataset = Dataset('preprocessing/converted/ternary_training/{y}/WpWnZ_train_nobtag_{y}_0.awkd'.format(y=year), data_format='channel_last')
-    val_dataset = Dataset('preprocessing/converted/ternary_training/{y}/WpWnZ_val_nobtag_{y}_0.awkd'.format(y=year), data_format='channel_last')
+    train_dataset = Dataset('preprocessing/converted/ternary_training/{y}/WpWnZ_train_{y}_0.awkd'.format(y=year), data_format='channel_last')
+    val_dataset = Dataset('preprocessing/converted/ternary_training/{y}/WpWnZ_val_{y}_0.awkd'.format(y=year), data_format='channel_last')
     
     model_type = 'particle_net_lite' # choose between 'particle_net' and 'particle_net_lite'
     num_classes = train_dataset.y.shape[1]

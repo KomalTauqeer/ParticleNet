@@ -111,7 +111,7 @@ def main():
         else:
   
             print ("You must give the region and the sample argument to prepare the dataset for the evalution. For example: --region=VBSSR --sample=ssWW")
-        sys.exit()
+            sys.exit()
 
 
 if __name__ == "__main__":
