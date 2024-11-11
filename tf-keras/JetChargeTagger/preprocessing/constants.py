@@ -1,7 +1,12 @@
-variables = ["PF_Px", "PF_Py", "PF_Pz", "PF_E", "PF_q"] #Puppi weights are applied already
-weights = ["event_weight"]
+# New set of constants to be used for Jet charge tagger Run 2 training
+
+inputvariables = ["PF_Px", "PF_Py", "PF_Pz", "PF_E", "PF_q"] #Puppi weights are applied already
+eventWeights = {"TT": "event_weight_corr", "WJet": "event_weight", "ST": "event_weight", "QCD": "event_weight", "Data_muon": "event_weight", "Data_electron": "event_weight", "ZJets": "event_weight"}
+
 labels = ["lep_charge"]
 treename = "AnalysisTree"
+samples = ["TT", "WJet", "ST", "QCD"]
+data_samples = ["Data_muon", "Data_electron"]
 
 inputfilepath = {  'TTCR': {
                        "UL16preVFP": "/ceph/ktauqeer/ULNtuples/UL16preVFP/TTCR/" ,
@@ -26,7 +31,7 @@ inputfilename = { 'TTCR': {
 
                      },
                   'ZJetsCR': {
-                             "ZJets": "ZJetsCR_ZJets_{}_genmatched_reduced.root",
+                             "ZJets": "ZJetsCR_ZJets_genmatched_reduced.root",
                              },
 
                 }
@@ -44,5 +49,3 @@ datafilename_UL18 =  { 'TTCR': {"Data_muon": "TTCR_SingleMuon_combined.root",
                 }
 
    
-
-

@@ -97,37 +97,8 @@ def prepare_input_dataset(sfile, treename, samplename, variables, labels, weight
     else:
         dataset[labels] = np.array(0.) #Add 0 label for Z jets
     weights_data = root2df(sfile, treename, weights)
+    if samplename == 'TT': weights_data.rename(columns={"event_weight_corr": "event_weight"}, inplace=True)
     dataset = dataset.join(weights_data)
 
     return dataset
-
-#def prepare_input_dataset_multitrain(filepath, filename, treename, sample_type, variables, labels, weights):
-#    dataset = root2df(filepath+filename, treename, variables)
-#    dataset = unstack_multi_df(dataset)
-#    if sample_type == 'ZJets':
-#        dataset[labels] = np.array(0.) #Add 0 label for Z jets
-#    if sample_type == 'TT':
-#        labels = root2df(filepath+filename, treename, labels)
-#        dataset = dataset.join(labels) #For tt labels comes from charge of lepton
-#    weights = root2df(filepath+filename, treename, weights)
-#    dataset = dataset.join(weights)
-#    return dataset
-
-#def prepare_input_test(sfile, treename, variables, labels, weights):
-#    dataset = root2df(filepath+filename, treename, variables)
-#    dataset = unstack_multi_df(dataset)
-#    labels = root2df(filepath+filename, treename, labels)
-#    weights = root2df(filepath+filename, treename, weights)
-#    dataset = dataset.join(labels)
-#    dataset = dataset.join(weights)
-#    return dataset
-
-#def prepare_input_eval(filepath, filename, treename, variables, labels, weights):
-#    dataset = root2df(filepath+filename, treename, variables)
-#    dataset = unstack_multi_df(dataset)
-#    labels = root2df(filepath+filename, treename, labels)
-#    weights = root2df(filepath+filename, treename, weights)
-#    dataset = dataset.join(labels)
-#    dataset = dataset.join(weights)
-#    return dataset
 

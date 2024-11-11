@@ -93,14 +93,13 @@ def main():
     #for sample in data_samples:
     #    train_test_split("TTCR", sample)
 
-    #for sample in samples:
-    #	train_test_split("TTCR", sample)
-    train_test_split("TTCR", "TT")
+    for sample in samples:
+    	train_test_split("TTCR", sample)
 
-    #for sample in samples:
-        #for unc in ["jec", "jer"]:
-        #    for uncdir in ["up", "down"]:
-        #        split_sys_files("TTCR", sample, unc, uncdir)
+    for sample in samples:
+        for unc in ["jec", "jer"]:
+            for uncdir in ["up", "down"]:
+                split_sys_files("TTCR", sample, unc, uncdir)
 
 
 if __name__ == '__main__':
